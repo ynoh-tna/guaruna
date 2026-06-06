@@ -117,3 +117,7 @@ MIT — see [LICENSE](LICENSE). Free to use, modify, self-host and redistribute.
 ## Contributing
 
 Issues and pull requests are welcome. The frontend is plain HTML/CSS/JavaScript with **no build step** — edit a file and refresh. The only dynamic part is the GPX database API under `server/` (FastAPI + SQLite). Nothing in the tools talks to a server: every GPX is parsed in your browser.
+
+## Support
+
+[![Buy me a coffee](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D5N820VX7W)
