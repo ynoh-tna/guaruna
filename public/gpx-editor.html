@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2F6BFF" />
+
+  <title>GPX Editor — Split, Shorten &amp; Merge GPX Files | Guaruna</title>
+  <meta name="description"
+    content="Free online GPX editor. Trim a route down to the part you want, split one track into segments, or merge several GPX files into one. Drag handles on a real map and elevation profile — nothing is uploaded." />
+
+  <link rel="canonical" href="https://guaruna.com/gpx-editor" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Guaruna" />
+  <meta property="og:title" content="GPX Editor — Split, Shorten &amp; Merge GPX Files" />
+  <meta property="og:description"
+    content="Trim, split and merge GPX tracks in your browser. Drag handles to crop a route, cut it into segments, or combine files — nothing uploaded." />
+  <meta property="og:url" content="https://guaruna.com/gpx-editor" />
+  <meta property="og:image" content="https://guaruna.com/og-image.svg" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://a.tile.openstreetmap.org" crossorigin />
+  <link rel="preconnect" href="https://b.tile.openstreetmap.org" crossorigin />
+  <link rel="preconnect" href="https://c.tile.openstreetmap.org" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/styles.css" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "GPX Editor",
+  "url": "https://guaruna.com/gpx-editor",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+</head>
+
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="site-header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="Guaruna home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2h4" />
+            <path d="M12 14l3-3" />
+            <circle cx="12" cy="14" r="8" />
+          </svg></span>
+        <span class="brand-name">Guaruna</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="/#tools">Tools</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
+        aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="tool-hero">
+      <div class="container">
+        <p class="breadcrumb"><a href="/">Home</a> / GPX editor</p>
+        <h1>GPX editor</h1>
+        <p class="lede">Reshape any <code>.gpx</code> without leaving your browser. Drag two handles to trim a route
+          down to the part you want, cut one track into clean segments, or merge several files into one. Your files are
+          never uploaded.</p>
+      </div>
+    </section>
+
+    <section class="gpx-shell">
+      <div class="container">
+        <div id="gpx-editor">
+
+          <!-- Mode tabs -->
+          <div class="ed-modebar">
+            <div class="segmented ed-modes" role="tablist" aria-label="Editor mode">
+              <button type="button" data-mode="shorten" aria-pressed="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path
+                    d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" />
+                </svg>
+                Shorten
+              </button>
+              <button type="button" data-mode="split" aria-pressed="false">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="6" cy="6" r="3" />
+                  <circle cx="6" cy="18" r="3" />
+                  <path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12" />
+                </svg>
+                Split
+              </button>
+              <button type="button" data-mode="merge" aria-pressed="false">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path
+                    d="M8 3H5a2 2 0 0 0-2 2v3m0 8v3a2 2 0 0 0 2 2h3M21 8V5a2 2 0 0 0-2-2h-3M6 12h7m0 0-3-3m3 3-3 3M21 12h-3" />
+                </svg>
+                Merge
+              </button>
+            </div>
+            <button type="button" id="ed-reset" class="btn btn-ghost btn-sm is-hidden">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+              Load another
+            </button>
+          </div>
+
+          <div id="ed-error" class="gpx-error is-hidden"></div>
+
+          <!-- ===== SHORTEN / SPLIT: single-file flow ===== -->
+          <div id="ed-single">
+            <div class="gpx-drop" id="ed-drop">
+              <svg class="gpx-drop-illu" width="120" height="90" viewBox="0 0 120 90" fill="none" aria-hidden="true">
+                <path d="M10 70 Q 30 30 55 48 T 110 22" stroke="#11C29B" stroke-width="3.5" stroke-linecap="round"
+                  stroke-linejoin="round" fill="none" />
+                <circle cx="10" cy="70" r="5" fill="#11C29B" />
+                <path d="M110 22 a7 7 0 1 0 0.01 0" fill="#FF5C39" />
+                <g opacity="0.55" stroke="#2F6BFF" stroke-width="2" stroke-linecap="round">
+                  <path d="M30 80h60" />
+                  <path d="M44 86h32" />
+                </g>
+              </svg>
+              <h2>Drop your GPX file here</h2>
+              <p>or choose a file — nothing leaves your browser.</p>
+              <label class="btn btn-primary gpx-file-label">
+                <span>Choose .gpx file</span>
+                <input type="file" id="ed-file" accept=".gpx,application/gpx+xml" />
+              </label>
+              <p class="muted ed-drop-sub">No file? Try one from the <a href="/gpx-database">GPX database</a>.</p>
+            </div>
+
+            <div id="ed-loading" class="gpx-loading is-hidden">
+              <div class="spinner" aria-hidden="true"></div>
+              <p>Loading route…</p>
+            </div>
+
+            <div id="ed-work" class="gpx-results is-hidden">
+              <div class="gpx-mapwrap">
+                <div id="ed-map" class="gpx-map"></div>
+                <div class="gpx-namechip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                    <path d="M14 3v6h6" />
+                  </svg><span id="ed-name"></span></div>
+              </div>
+
+              <div class="gpx-statbar" id="ed-stats"></div>
+
+              <div class="gpx-card">
+                <div class="ed-card-head">
+                  <h3>Elevation profile</h3>
+                  <span class="ed-hint" id="ed-hint"></span>
+                </div>
+                <div id="ed-elevation" class="ed-elewrap"></div>
+              </div>
+
+              <div class="gpx-card" id="ed-controls"></div>
+            </div>
+          </div>
+
+          <!-- ===== MERGE: multi-file flow ===== -->
+          <div id="ed-merge" class="is-hidden">
+            <div class="gpx-drop" id="ed-merge-drop">
+              <svg class="gpx-drop-illu" width="120" height="90" viewBox="0 0 120 90" fill="none" aria-hidden="true">
+                <path d="M8 26 Q 34 26 52 45" stroke="#11C29B" stroke-width="3.2" stroke-linecap="round" fill="none" />
+                <path d="M8 64 Q 34 64 52 45" stroke="#2F6BFF" stroke-width="3.2" stroke-linecap="round" fill="none" />
+                <path d="M52 45 L112 45" stroke="#FF5C39" stroke-width="3.2" stroke-linecap="round" fill="none" />
+                <circle cx="8" cy="26" r="4.5" fill="#11C29B" />
+                <circle cx="8" cy="64" r="4.5" fill="#2F6BFF" />
+                <circle cx="112" cy="45" r="4.5" fill="#FF5C39" />
+              </svg>
+              <h2>Drop GPX files to merge</h2>
+              <p>add two or more — they join in the order you set below.</p>
+              <label class="btn btn-primary gpx-file-label">
+                <span>Choose .gpx files</span>
+                <input type="file" id="ed-merge-file" accept=".gpx,application/gpx+xml" multiple />
+              </label>
+              <p class="muted ed-drop-sub">Recorded each day or stage separately? Combine them into one track.</p>
+            </div>
+
+            <div id="ed-merge-work" class="gpx-results is-hidden">
+              <div class="gpx-card">
+                <div class="ed-card-head">
+                  <h3>Files to merge</h3>
+                  <span class="ed-hint" id="ed-merge-summary"></span>
+                </div>
+                <div id="ed-merge-list" class="ed-filelist"></div>
+                <label class="btn btn-ghost btn-sm ed-addmore">
+                  <span>+ Add more files</span>
+                  <input type="file" id="ed-merge-add" accept=".gpx,application/gpx+xml" multiple />
+                </label>
+              </div>
+
+              <div class="gpx-card ed-export">
+                <div class="field">
+                  <label for="ed-merge-name">Output filename</label>
+                  <div class="ed-namerow">
+                    <input class="input" type="text" id="ed-merge-name" placeholder="merged-route" />
+                    <span class="ed-ext mono">.gpx</span>
+                  </div>
+                </div>
+                <button type="button" id="ed-merge-go" class="btn btn-primary btn-block">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <path d="M7 10l5 5 5-5" />
+                    <path d="M12 15V3" />
+                  </svg>
+                  Merge &amp; download GPX
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:10px">
+      <div class="container narrow prose">
+        <h2>Private by design</h2>
+        <p>Every edit happens in your browser with JavaScript — your GPX is never sent to any server. Map tiles come
+          from OpenStreetMap; only the map view you see is requested, never your file. Close the tab and your data is
+          gone.</p>
+        <h3>What can you do with it?</h3>
+        <p><strong>Shorten:</strong> downloaded a 120&nbsp;km course but only running the back half? Drag the start and
+          end handles to keep exactly the section you need. <strong>Split:</strong> turn one long file into separate
+          days or laps — in equal parts, every few kilometres, or at your own break points. <strong>Merge:</strong>
+          combine several recordings into a single track for a multi-day adventure or a stage race.</p>
+        <h3>Where to get a GPX file</h3>
+        <p>Export one from Garmin Connect, Strava (open an activity → "Export GPX"), Komoot, Wahoo or Coros — or grab a
+          ready-made route from the <a href="/gpx-database">GPX database</a>.</p>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2 style="margin-bottom:20px">Frequently asked questions</h2>
+        <div class="faq">
+          <details>
+            <summary>How do I merge several GPX files into one?</summary>
+            <p>Open the editor, switch to Merge, add your files, drag them into the order you want, and download a
+              single combined track.</p>
+          </details>
+          <details>
+            <summary>Can I trim or crop a GPX file?</summary>
+            <p>Yes. In Shorten mode you drag two handles along the elevation profile to keep only the section you want.
+            </p>
+          </details>
+          <details>
+            <summary>How do I split a GPX track?</summary>
+            <p>In Split mode, click the profile to drop break points, or split into equal parts or every few kilometres,
+              then download each segment.</p>
+          </details>
+          <details>
+            <summary>Is my file uploaded?</summary>
+            <p>No. All editing happens in your browser and nothing is sent anywhere.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I merge several GPX files into one?","acceptedAnswer":{"@type":"Answer","text":"Open the editor, switch to Merge, add your files, drag them into the order you want, and download a single combined track."}},{"@type":"Question","name":"Can I trim or crop a GPX file?","acceptedAnswer":{"@type":"Answer","text":"Yes. In Shorten mode you drag two handles along the elevation profile to keep only the section you want."}},{"@type":"Question","name":"How do I split a GPX track?","acceptedAnswer":{"@type":"Answer","text":"In Split mode, click the profile to drop break points, or split into equal parts or every few kilometres, then download each segment."}},{"@type":"Question","name":"Is my file uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. All editing happens in your browser and nothing is sent anywhere."}}]}
+  </script>
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://guaruna.com/"},{"@type":"ListItem","position":2,"name":"GPX editor","item":"https://guaruna.com/gpx-editor"}]}
+  </script>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="/" aria-label="Guaruna home"><span class="brand-mark" aria-hidden="true"><svg
+              viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2h4" />
+              <path d="M12 14l3-3" />
+              <circle cx="12" cy="14" r="8" />
+            </svg></span><span class="brand-name">Guaruna</span></a>
+        <p class="footer-tag">Free running tools that run entirely in your browser — nothing uploaded.</p>
+      </div>
+      <nav aria-label="Footer — tools">
+        <p class="footer-title">Tools</p>
+        <a href="/gpx-analyzer">GPX viewer</a>
+        <a href="/gpx-editor">GPX editor</a>
+        <a href="/gpx-converter">GPX converter</a>
+        <a href="/gpx-cleaner">GPX cleaner</a>
+        <a href="/race-planner">Race planner</a>
+        <a href="/race-predictor">Race predictor</a>
+        <a href="/heart-rate-zones">Heart-rate zones</a>
+        <a href="/pace-converter">Pace converter</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <nav aria-label="Footer — project">
+        <p class="footer-title">Project</p>
+        <a href="https://github.com/ynoh-tna/guaruna" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ynoh-tna/guaruna/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
+        <a href="https://github.com/ynoh-tna/guaruna#readme" target="_blank" rel="noopener">Self-host</a>
+      </nav>
+      <div>
+        <p class="footer-title">Contact</p>
+        <a href="#" data-u="hello" data-d="guaruna.com" data-subject="Hello Guaruna">Email us</a>
+        <!-- Ko-fi support button (temporarily disabled, re-enable by removing these comment markers)
+      <a class="kofi-btn" href="https://ko-fi.com/D5N820VX7W" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
+      -->
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Guaruna. All rights reserved.</p>
+      <p>Running tools &middot; GPX editing</p>
+    </div>
+  </footer>
+
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="/script.js" defer></script>
+  <script src="/tools.js" defer></script>
+</body>
+
+</html>

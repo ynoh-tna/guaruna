@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2F6BFF" />
+
+  <title>Pace Converter — Pace ⇄ Speed (min/km, min/mile, km/h, mph) | Guaruna</title>
+  <meta name="description"
+    content="Free running pace converter. Convert both ways between pace (min/km, min/mile) and speed (km/h, mph), plus track splits per 400 m and 1000 m." />
+
+  <link rel="canonical" href="https://guaruna.com/pace-converter" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Guaruna" />
+  <meta property="og:title" content="Pace Converter — Pace ⇄ Speed" />
+  <meta property="og:description" content="Convert both ways between pace and speed: min/km, min/mile, km/h, mph." />
+  <meta property="og:url" content="https://guaruna.com/pace-converter" />
+  <meta property="og:image" content="https://guaruna.com/og-image.svg" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="/styles.css" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Pace Converter",
+  "url": "https://guaruna.com/pace-converter",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+</head>
+
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="site-header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="Guaruna home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2h4" />
+            <path d="M12 14l3-3" />
+            <circle cx="12" cy="14" r="8" />
+          </svg></span>
+        <span class="brand-name">Guaruna</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="/#tools">Tools</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
+        aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="tool-hero">
+      <div class="container">
+        <p class="breadcrumb"><a href="/">Home</a> / Pace converter</p>
+        <h1>Pace converter</h1>
+        <p class="lede">Convert both ways: enter a pace (min/km or min/mile) <em>or</em> a speed (km/h or mph), and get
+          every other unit instantly — including 400 m and 1000 m track splits.</p>
+      </div>
+    </section>
+
+    <section class="tool-shell">
+      <div class="container">
+        <div id="pace-converter" class="tool-grid">
+
+          <div class="panel">
+            <h2>Convert from</h2>
+
+            <div class="field">
+              <label for="cv-type">Input type</label>
+              <select class="input" id="cv-type">
+                <option value="pace_km">Pace — min / km</option>
+                <option value="pace_mi">Pace — min / mile</option>
+                <option value="kmh">Speed — km/h</option>
+                <option value="mph">Speed — mph</option>
+              </select>
+            </div>
+
+            <div class="field" id="cv-pace-group">
+              <label>Pace <span class="hint">minutes &amp; seconds</span></label>
+              <div class="time-inputs" style="grid-template-columns:1fr 1fr">
+                <div><input class="input mono" id="cv-min" type="number" min="0" inputmode="numeric" placeholder="5" />
+                  <div class="sub">min</div>
+                </div>
+                <div><input class="input mono" id="cv-sec" type="number" min="0" max="59" inputmode="numeric"
+                    placeholder="00" />
+                  <div class="sub">sec</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field is-hidden" id="cv-speed-group">
+              <label for="cv-speed">Speed <span class="hint">value in the selected unit</span></label>
+              <input class="input mono" id="cv-speed" type="number" min="0" step="0.1" inputmode="decimal"
+                placeholder="12.0" />
+            </div>
+
+            <p class="muted" style="font-size:.9rem">Results update as you type.</p>
+          </div>
+
+          <div class="panel panel-result">
+            <h2>Converted</h2>
+            <div class="result-grid" id="cv-grid" style="margin-top:0"></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:10px">
+      <div class="container narrow prose">
+        <h2>Pace and speed, both directions</h2>
+        <p><strong>Pace</strong> is time per distance (e.g. 5:00 per km); <strong>speed</strong> is distance per time
+          (e.g. 12 km/h). To go from speed to pace, divide 60 by your speed in km/h. To switch km and miles, multiply or
+          divide by 1.609.</p>
+        <h3>Common conversions</h3>
+        <ul>
+          <li>5:00 /km = 8:03 /mile = 12.0 km/h = 7.46 mph</li>
+          <li>12.0 km/h = 5:00 /km = 7.46 mph</li>
+          <li>10.0 km/h = 6:00 /km = 6.21 mph</li>
+        </ul>
+        <p class="muted">Analysing a recorded run instead? Use the <a href="/gpx-analyzer">GPX viewer</a>.</p>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2 style="margin-bottom:20px">Frequently asked questions</h2>
+        <div class="faq">
+          <details>
+            <summary>Can I convert pace to speed and back?</summary>
+            <p>Yes, it works both ways between min/km, min/mile, km/h and mph.</p>
+          </details>
+          <details>
+            <summary>How do I convert min/km to min/mile?</summary>
+            <p>Enter your pace in min/km and the converter shows min/mile instantly, along with km/h and mph.</p>
+          </details>
+          <details>
+            <summary>Is the pace converter free?</summary>
+            <p>Yes, free and it runs entirely in your browser.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I convert pace to speed and back?","acceptedAnswer":{"@type":"Answer","text":"Yes, it works both ways between min/km, min/mile, km/h and mph."}},{"@type":"Question","name":"How do I convert min/km to min/mile?","acceptedAnswer":{"@type":"Answer","text":"Enter your pace in min/km and the converter shows min/mile instantly, along with km/h and mph."}},{"@type":"Question","name":"Is the pace converter free?","acceptedAnswer":{"@type":"Answer","text":"Yes, free and it runs entirely in your browser."}}]}
+  </script>
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://guaruna.com/"},{"@type":"ListItem","position":2,"name":"Pace converter","item":"https://guaruna.com/pace-converter"}]}
+  </script>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="/" aria-label="Guaruna home"><span class="brand-mark" aria-hidden="true"><svg
+              viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2h4" />
+              <path d="M12 14l3-3" />
+              <circle cx="12" cy="14" r="8" />
+            </svg></span><span class="brand-name">Guaruna</span></a>
+        <p class="footer-tag">Free running tools that run entirely in your browser — nothing uploaded.</p>
+      </div>
+      <nav aria-label="Footer — tools">
+        <p class="footer-title">Tools</p>
+        <a href="/gpx-analyzer">GPX viewer</a>
+        <a href="/gpx-editor">GPX editor</a>
+        <a href="/gpx-converter">GPX converter</a>
+        <a href="/gpx-cleaner">GPX cleaner</a>
+        <a href="/race-planner">Race planner</a>
+        <a href="/race-predictor">Race predictor</a>
+        <a href="/heart-rate-zones">Heart-rate zones</a>
+        <a href="/pace-converter">Pace converter</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <nav aria-label="Footer — project">
+        <p class="footer-title">Project</p>
+        <a href="https://github.com/ynoh-tna/guaruna" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ynoh-tna/guaruna/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
+        <a href="https://github.com/ynoh-tna/guaruna#readme" target="_blank" rel="noopener">Self-host</a>
+      </nav>
+      <div>
+        <p class="footer-title">Contact</p>
+        <a href="#" data-u="hello" data-d="guaruna.com" data-subject="Hello Guaruna">Email us</a>
+        <!-- Ko-fi support button (temporarily disabled, re-enable by removing these comment markers)
+      <a class="kofi-btn" href="https://ko-fi.com/D5N820VX7W" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
+      -->
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Guaruna. All rights reserved.</p>
+      <p>Running tools &middot; Pace converter</p>
+    </div>
+  </footer>
+
+  <script src="/script.js" defer></script>
+  <script src="/tools.js" defer></script>
+</body>
+
+</html>

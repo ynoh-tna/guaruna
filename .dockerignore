@@ -1,0 +1,11 @@
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+nginx
+data
+uploads
+server/data
+public/routes/uploads
+*.md

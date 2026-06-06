@@ -1,0 +1,1 @@
+# keeps the uploads directory in git; user-uploaded GPX files are gitignored

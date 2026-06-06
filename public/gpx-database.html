@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2F6BFF" />
+
+  <title>GPX Database — Share &amp; Download Running Routes | Guaruna</title>
+  <meta name="description"
+    content="A community GPX database. Search running routes, download them, open them in the viewer, or add your own GPX file for everyone to use." />
+
+  <link rel="canonical" href="https://guaruna.com/gpx-database" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Guaruna" />
+  <meta property="og:title" content="GPX Database — Share &amp; Download Running Routes" />
+  <meta property="og:description" content="Search, download, analyze and add running routes as GPX files." />
+  <meta property="og:url" content="https://guaruna.com/gpx-database" />
+  <meta property="og:image" content="https://guaruna.com/og-image.svg" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="/styles.css" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "GPX Database",
+  "url": "https://guaruna.com/gpx-database",
+  "description": "A community database of running routes as downloadable GPX files."
+}
+</script>
+</head>
+
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="site-header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="Guaruna home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2h4" />
+            <path d="M12 14l3-3" />
+            <circle cx="12" cy="14" r="8" />
+          </svg></span>
+        <span class="brand-name">Guaruna</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="/#tools">Tools</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
+        aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="tool-hero">
+      <div class="container">
+        <p class="breadcrumb"><a href="/">Home</a> / GPX database</p>
+        <h1>GPX database</h1>
+        <p class="lede">Search shared running routes, open one in the viewer or download it — and add your own GPX for
+          everyone to use.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:14px">
+      <div class="container">
+        <div id="gpx-db">
+
+          <div class="db-toolbar">
+            <div class="db-search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" />
+              </svg>
+              <input id="db-search" class="input" type="search" placeholder="Search routes by name or place…"
+                aria-label="Search routes" />
+            </div>
+            <button class="btn btn-primary" id="db-add-btn" type="button">+ Add a route</button>
+          </div>
+
+          <p id="db-status" class="muted db-status is-hidden"></p>
+          <div class="route-list" id="db-grid"></div>
+          <div class="pager" id="db-pager"></div>
+
+          <!-- Add route modal -->
+          <div class="modal-overlay is-hidden" id="db-modal" role="dialog" aria-modal="true" aria-label="Add a route">
+            <div class="modal">
+              <button class="modal-close" data-close type="button" aria-label="Close">&times;</button>
+              <h2>Add a route</h2>
+              <p class="muted" style="margin-bottom:18px">Upload a <code>.gpx</code> file (max 10&nbsp;MB). It becomes
+                public — please don't upload private or sensitive tracks.</p>
+              <form id="db-form">
+                <div class="field">
+                  <label for="db-name">Route name</label>
+                  <input class="input" id="db-name" type="text" maxlength="80" placeholder="e.g. Sunday long run"
+                    required />
+                </div>
+                <div class="field">
+                  <label for="db-file">GPX file</label>
+                  <input class="input" id="db-file" type="file" accept=".gpx,application/gpx+xml" required />
+                </div>
+                <div id="db-form-error" class="gpx-error is-hidden" style="margin-bottom:14px"></div>
+                <div class="modal-actions">
+                  <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+                  <button type="submit" class="btn btn-primary" id="db-submit">Add route</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2 style="margin-bottom:20px">Frequently asked questions</h2>
+        <div class="faq">
+          <details>
+            <summary>Is the GPX route database free?</summary>
+            <p>Yes. Browsing, searching and downloading routes is free, and you can add your own.</p>
+          </details>
+          <details>
+            <summary>What happens to a route I upload?</summary>
+            <p>It becomes public so anyone can view and download it. Please do not upload private or sensitive tracks.
+            </p>
+          </details>
+          <details>
+            <summary>Can I open a route in the viewer?</summary>
+            <p>Yes. Every route opens in the GPX viewer with its map, elevation profile and splits.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is the GPX route database free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Browsing, searching and downloading routes is free, and you can add your own."}},{"@type":"Question","name":"What happens to a route I upload?","acceptedAnswer":{"@type":"Answer","text":"It becomes public so anyone can view and download it. Please do not upload private or sensitive tracks."}},{"@type":"Question","name":"Can I open a route in the viewer?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every route opens in the GPX viewer with its map, elevation profile and splits."}}]}
+  </script>
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://guaruna.com/"},{"@type":"ListItem","position":2,"name":"GPX database","item":"https://guaruna.com/gpx-database"}]}
+  </script>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="/" aria-label="Guaruna home"><span class="brand-mark" aria-hidden="true"><svg
+              viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2h4" />
+              <path d="M12 14l3-3" />
+              <circle cx="12" cy="14" r="8" />
+            </svg></span><span class="brand-name">Guaruna</span></a>
+        <p class="footer-tag">Free running tools that run entirely in your browser — nothing uploaded.</p>
+      </div>
+      <nav aria-label="Footer — tools">
+        <p class="footer-title">Tools</p>
+        <a href="/gpx-analyzer">GPX viewer</a>
+        <a href="/gpx-editor">GPX editor</a>
+        <a href="/gpx-converter">GPX converter</a>
+        <a href="/gpx-cleaner">GPX cleaner</a>
+        <a href="/race-planner">Race planner</a>
+        <a href="/race-predictor">Race predictor</a>
+        <a href="/heart-rate-zones">Heart-rate zones</a>
+        <a href="/pace-converter">Pace converter</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <nav aria-label="Footer — project">
+        <p class="footer-title">Project</p>
+        <a href="https://github.com/ynoh-tna/guaruna" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ynoh-tna/guaruna/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
+        <a href="https://github.com/ynoh-tna/guaruna#readme" target="_blank" rel="noopener">Self-host</a>
+      </nav>
+      <div>
+        <p class="footer-title">Contact</p>
+        <a href="#" data-u="hello" data-d="guaruna.com" data-subject="Hello Guaruna">Email us</a>
+        <!-- Ko-fi support button (temporarily disabled, re-enable by removing these comment markers)
+      <a class="kofi-btn" href="https://ko-fi.com/D5N820VX7W" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
+      -->
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Guaruna. All rights reserved.</p>
+      <p>Running tools &middot; GPX database</p>
+    </div>
+  </footer>
+
+  <script src="/script.js" defer></script>
+  <script src="/database.js" defer></script>
+</body>
+
+</html>

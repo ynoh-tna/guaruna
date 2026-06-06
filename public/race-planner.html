@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2F6BFF" />
+
+  <title>Race Planner — Goal Pace &amp; Splits for 10K, Half &amp; Marathon | Guaruna</title>
+  <meta name="description"
+    content="Free race planner: pick a distance (10K, half, marathon, or custom) and a target finish time to get your average pace, speed and a full km-by-km split table." />
+
+  <link rel="canonical" href="https://guaruna.com/race-planner" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Guaruna" />
+  <meta property="og:title" content="Race Planner — Goal Pace &amp; Splits" />
+  <meta property="og:description"
+    content="Pick a distance and a target time to get your average pace and km-by-km splits." />
+  <meta property="og:url" content="https://guaruna.com/race-planner" />
+  <meta property="og:image" content="https://guaruna.com/og-image.svg" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="/styles.css" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Race Planner",
+  "url": "https://guaruna.com/race-planner",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+</head>
+
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="site-header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="Guaruna home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2h4" />
+            <path d="M12 14l3-3" />
+            <circle cx="12" cy="14" r="8" />
+          </svg></span>
+        <span class="brand-name">Guaruna</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="/#tools">Tools</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
+        aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="tool-hero">
+      <div class="container">
+        <p class="breadcrumb"><a href="/">Home</a> / Race planner</p>
+        <h1>Race planner</h1>
+        <p class="lede">Pick a distance — or a classic race — and a target finish time. Guaruna gives you the average
+          pace to hold and a full km-by-km split table to race by.</p>
+      </div>
+    </section>
+
+    <section class="tool-shell">
+      <div class="container">
+        <div id="race-planner" class="tool-grid">
+
+          <form class="panel">
+            <h2>Your race</h2>
+
+            <div class="field">
+              <label for="pl-distance">Distance</label>
+              <div class="field-row">
+                <input class="input" id="pl-distance" type="number" min="0" step="0.01" inputmode="decimal"
+                  placeholder="21.1" />
+                <div class="segmented" data-segmented="pl-unit" role="group" aria-label="Distance unit">
+                  <button type="button" data-val="km" aria-pressed="true">km</button>
+                  <button type="button" data-val="mi" aria-pressed="false">mi</button>
+                </div>
+              </div>
+              <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap">
+                <button type="button" class="btn btn-ghost" data-preset-km="5"
+                  style="padding:7px 13px; font-size:.85rem">5K</button>
+                <button type="button" class="btn btn-ghost" data-preset-km="10"
+                  style="padding:7px 13px; font-size:.85rem">10K</button>
+                <button type="button" class="btn btn-ghost" data-preset-km="21.0975"
+                  style="padding:7px 13px; font-size:.85rem">Half</button>
+                <button type="button" class="btn btn-ghost" data-preset-km="42.195"
+                  style="padding:7px 13px; font-size:.85rem">Marathon</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Target finish time <span class="hint">hrs / min / sec</span></label>
+              <div class="time-inputs">
+                <div><input class="input mono" id="pl-h" type="number" min="0" inputmode="numeric" placeholder="1" />
+                  <div class="sub">hrs</div>
+                </div>
+                <div><input class="input mono" id="pl-m" type="number" min="0" inputmode="numeric" placeholder="45" />
+                  <div class="sub">min</div>
+                </div>
+                <div><input class="input mono" id="pl-s" type="number" min="0" inputmode="numeric" placeholder="00" />
+                  <div class="sub">sec</div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-block" type="submit">Plan my race</button>
+          </form>
+
+          <div class="panel panel-result">
+            <h2>Your plan</h2>
+            <div id="pl-empty" class="result-empty">Pick a distance and a target time to see your pacing plan.</div>
+            <div id="pl-results" class="is-hidden">
+              <div class="readout">
+                <div class="big" id="pl-big">—</div>
+                <div class="unit" id="pl-big-unit">min / km</div>
+              </div>
+              <div class="result-grid" id="pl-grid"></div>
+              <div class="gpx-splits-wrap" style="margin-top:22px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Km</th>
+                      <th>Pace</th>
+                      <th>Target time</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pl-splits"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:10px">
+      <div class="container narrow prose">
+        <h2>How to plan your race pace</h2>
+        <p>Your average pace is simply your target finish time divided by the distance. For a sub-2-hour half marathon
+          (21.1&nbsp;km in 2:00:00), that's about 5:41&nbsp;/km. The split table shows the cumulative time you should
+          hit each kilometre at if you run an even pace — the most reliable way to race well.</p>
+        <h3>Even vs. negative splits</h3>
+        <p>Holding the same pace throughout is an <em>even split</em>. Many runners aim for a slight <em>negative
+            split</em> (second half a touch faster), so treat the table as your ceiling for the first half.</p>
+        <p class="muted">Want to check a recorded run instead? Use the <a href="/gpx-analyzer">GPX viewer</a>, or set
+          your effort with <a href="/heart-rate-zones">heart-rate zones</a>.</p>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2 style="margin-bottom:20px">Frequently asked questions</h2>
+        <div class="faq">
+          <details>
+            <summary>How is my goal pace calculated?</summary>
+            <p>It is your target finish time divided by the distance, shown as an even-split pace per kilometre.</p>
+          </details>
+          <details>
+            <summary>Can I use any distance?</summary>
+            <p>Yes. Pick a preset (5K, 10K, half, marathon) or enter any custom distance in kilometres or miles.</p>
+          </details>
+          <details>
+            <summary>Is the race planner free?</summary>
+            <p>Yes, free, no account, and it runs entirely in your browser.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How is my goal pace calculated?","acceptedAnswer":{"@type":"Answer","text":"It is your target finish time divided by the distance, shown as an even-split pace per kilometre."}},{"@type":"Question","name":"Can I use any distance?","acceptedAnswer":{"@type":"Answer","text":"Yes. Pick a preset (5K, 10K, half, marathon) or enter any custom distance in kilometres or miles."}},{"@type":"Question","name":"Is the race planner free?","acceptedAnswer":{"@type":"Answer","text":"Yes, free, no account, and it runs entirely in your browser."}}]}
+  </script>
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://guaruna.com/"},{"@type":"ListItem","position":2,"name":"Race planner","item":"https://guaruna.com/race-planner"}]}
+  </script>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="/" aria-label="Guaruna home"><span class="brand-mark" aria-hidden="true"><svg
+              viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2h4" />
+              <path d="M12 14l3-3" />
+              <circle cx="12" cy="14" r="8" />
+            </svg></span><span class="brand-name">Guaruna</span></a>
+        <p class="footer-tag">Free running tools that run entirely in your browser — nothing uploaded.</p>
+      </div>
+      <nav aria-label="Footer — tools">
+        <p class="footer-title">Tools</p>
+        <a href="/gpx-analyzer">GPX viewer</a>
+        <a href="/gpx-editor">GPX editor</a>
+        <a href="/gpx-converter">GPX converter</a>
+        <a href="/gpx-cleaner">GPX cleaner</a>
+        <a href="/race-planner">Race planner</a>
+        <a href="/race-predictor">Race predictor</a>
+        <a href="/heart-rate-zones">Heart-rate zones</a>
+        <a href="/pace-converter">Pace converter</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <nav aria-label="Footer — project">
+        <p class="footer-title">Project</p>
+        <a href="https://github.com/ynoh-tna/guaruna" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ynoh-tna/guaruna/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
+        <a href="https://github.com/ynoh-tna/guaruna#readme" target="_blank" rel="noopener">Self-host</a>
+      </nav>
+      <div>
+        <p class="footer-title">Contact</p>
+        <a href="#" data-u="hello" data-d="guaruna.com" data-subject="Hello Guaruna">Email us</a>
+        <!-- Ko-fi support button (temporarily disabled, re-enable by removing these comment markers)
+      <a class="kofi-btn" href="https://ko-fi.com/D5N820VX7W" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
+      -->
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Guaruna. All rights reserved.</p>
+      <p>Running tools &middot; Race planner</p>
+    </div>
+  </footer>
+
+  <script src="/script.js" defer></script>
+  <script src="/tools.js" defer></script>
+</body>
+
+</html>

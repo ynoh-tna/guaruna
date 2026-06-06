@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2F6BFF" />
+
+  <title>Heart Rate Zones Calculator — 5 Training Zones | Guaruna</title>
+  <meta name="description"
+    content="Free heart-rate zones calculator. Get your 5 training zones from your age or max heart rate, using %HRmax or the Karvonen (heart-rate reserve) method." />
+
+  <link rel="canonical" href="https://guaruna.com/heart-rate-zones" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Guaruna" />
+  <meta property="og:title" content="Heart Rate Zones Calculator — 5 Training Zones" />
+  <meta property="og:description"
+    content="Calculate your 5 heart-rate training zones with %HRmax or the Karvonen method." />
+  <meta property="og:url" content="https://guaruna.com/heart-rate-zones" />
+  <meta property="og:image" content="https://guaruna.com/og-image.svg" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="/styles.css" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Heart Rate Zones Calculator",
+  "url": "https://guaruna.com/heart-rate-zones",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+</head>
+
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="site-header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="Guaruna home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2h4" />
+            <path d="M12 14l3-3" />
+            <circle cx="12" cy="14" r="8" />
+          </svg></span>
+        <span class="brand-name">Guaruna</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="/#tools">Tools</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
+        aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="tool-hero">
+      <div class="container">
+        <p class="breadcrumb"><a href="/">Home</a> / Heart-rate zones</p>
+        <h1>Heart rate zones calculator</h1>
+        <p class="lede">Find your 5 training zones from your age or measured max heart rate. Switch between the simple
+          %HRmax method and the more personal Karvonen (heart-rate reserve) method.</p>
+      </div>
+    </section>
+
+    <section class="tool-shell">
+      <div class="container">
+        <div id="hr-zones" class="tool-grid">
+
+          <div class="panel">
+            <h2>Your heart rate</h2>
+
+            <div class="field">
+              <label>Method</label>
+              <div class="segmented" data-segmented="hr-method" role="group" aria-label="Calculation method">
+                <button type="button" data-val="max" aria-pressed="true">% HRmax</button>
+                <button type="button" data-val="karvonen" aria-pressed="false">Karvonen</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="hr-age">Age <span class="hint">used to estimate max HR (220 − age)</span></label>
+              <input class="input" id="hr-age" type="number" min="0" max="120" inputmode="numeric" placeholder="35" />
+            </div>
+
+            <div class="field">
+              <label for="hr-max">Max heart rate <span class="hint">optional — overrides the age estimate</span></label>
+              <input class="input mono" id="hr-max" type="number" min="0" max="250" inputmode="numeric"
+                placeholder="e.g. 185" />
+            </div>
+
+            <div class="field">
+              <label for="hr-rest">Resting heart rate <span class="hint">required for Karvonen</span></label>
+              <input class="input mono" id="hr-rest" type="number" min="0" max="150" inputmode="numeric"
+                placeholder="e.g. 55" />
+            </div>
+          </div>
+
+          <div class="panel panel-result">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px">
+              <h2 style="margin:0">Your zones</h2>
+              <span style="color:#94A3B8; font-size:.9rem">Max HR: <strong id="hr-max-label"
+                  style="color:#fff; font-family:var(--font-mono)">—</strong></span>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Zone</th>
+                  <th>Intensity</th>
+                  <th>Heart rate</th>
+                </tr>
+              </thead>
+              <tbody id="hr-body"></tbody>
+            </table>
+            <p id="hr-method-note" style="color:#94A3B8; font-size:.85rem; margin:16px 0 0"></p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:10px">
+      <div class="container narrow prose">
+        <h2>Understanding the 5 heart-rate zones</h2>
+        <ul>
+          <li><strong>Zone 1 — Recovery (50–60%):</strong> very easy, for warm-ups and active recovery.</li>
+          <li><strong>Zone 2 — Endurance (60–70%):</strong> conversational pace; builds your aerobic base.</li>
+          <li><strong>Zone 3 — Tempo (70–80%):</strong> comfortably hard, "marathon effort".</li>
+          <li><strong>Zone 4 — Threshold (80–90%):</strong> hard, sustainable for ~1 hour.</li>
+          <li><strong>Zone 5 — VO2 max (90–100%):</strong> very hard intervals.</li>
+        </ul>
+        <h3>%HRmax vs. Karvonen</h3>
+        <p>The <strong>%HRmax</strong> method takes a percentage of your maximum heart rate. The
+          <strong>Karvonen</strong> method uses your <em>heart-rate reserve</em> (max − resting), which accounts for
+          fitness and usually gives slightly higher, more individual zone boundaries. If you know your resting HR,
+          Karvonen is the better choice.</p>
+        <p class="muted">Note: 220 − age is a rough estimate. For real precision, use a max HR from a recent hard
+          effort.</p>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2 style="margin-bottom:20px">Frequently asked questions</h2>
+        <div class="faq">
+          <details>
+            <summary>How are the heart-rate zones calculated?</summary>
+            <p>As a percentage of your maximum heart rate, or with the Karvonen method using your heart-rate reserve
+              when you add a resting heart rate.</p>
+          </details>
+          <details>
+            <summary>What if I do not know my max heart rate?</summary>
+            <p>Leave it blank and it is estimated from your age as 220 minus your age.</p>
+          </details>
+          <details>
+            <summary>What are the five zones?</summary>
+            <p>Recovery, endurance, tempo, threshold and VO2 max, each shown as a heart-rate range in beats per minute.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How are the heart-rate zones calculated?","acceptedAnswer":{"@type":"Answer","text":"As a percentage of your maximum heart rate, or with the Karvonen method using your heart-rate reserve when you add a resting heart rate."}},{"@type":"Question","name":"What if I do not know my max heart rate?","acceptedAnswer":{"@type":"Answer","text":"Leave it blank and it is estimated from your age as 220 minus your age."}},{"@type":"Question","name":"What are the five zones?","acceptedAnswer":{"@type":"Answer","text":"Recovery, endurance, tempo, threshold and VO2 max, each shown as a heart-rate range in beats per minute."}}]}
+  </script>
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://guaruna.com/"},{"@type":"ListItem","position":2,"name":"Heart-rate zones","item":"https://guaruna.com/heart-rate-zones"}]}
+  </script>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="/" aria-label="Guaruna home"><span class="brand-mark" aria-hidden="true"><svg
+              viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2h4" />
+              <path d="M12 14l3-3" />
+              <circle cx="12" cy="14" r="8" />
+            </svg></span><span class="brand-name">Guaruna</span></a>
+        <p class="footer-tag">Free running tools that run entirely in your browser — nothing uploaded.</p>
+      </div>
+      <nav aria-label="Footer — tools">
+        <p class="footer-title">Tools</p>
+        <a href="/gpx-analyzer">GPX viewer</a>
+        <a href="/gpx-editor">GPX editor</a>
+        <a href="/gpx-converter">GPX converter</a>
+        <a href="/gpx-cleaner">GPX cleaner</a>
+        <a href="/race-planner">Race planner</a>
+        <a href="/race-predictor">Race predictor</a>
+        <a href="/heart-rate-zones">Heart-rate zones</a>
+        <a href="/pace-converter">Pace converter</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <nav aria-label="Footer — project">
+        <p class="footer-title">Project</p>
+        <a href="https://github.com/ynoh-tna/guaruna" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ynoh-tna/guaruna/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
+        <a href="https://github.com/ynoh-tna/guaruna#readme" target="_blank" rel="noopener">Self-host</a>
+      </nav>
+      <div>
+        <p class="footer-title">Contact</p>
+        <a href="#" data-u="hello" data-d="guaruna.com" data-subject="Hello Guaruna">Email us</a>
+        <!-- Ko-fi support button (temporarily disabled, re-enable by removing these comment markers)
+      <a class="kofi-btn" href="https://ko-fi.com/D5N820VX7W" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
+      -->
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Guaruna. All rights reserved.</p>
+      <p>Running tools &middot; Heart-rate zones</p>
+    </div>
+  </footer>
+
+  <script src="/script.js" defer></script>
+  <script src="/tools.js" defer></script>
+</body>
+
+</html>

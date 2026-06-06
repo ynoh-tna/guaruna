@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2F6BFF" />
+
+  <title>GPX Cleaner — Simplify &amp; Reduce GPX File Size | Guaruna</title>
+  <meta name="description"
+    content="Free online GPX cleaner. Reduce GPX file size by simplifying the track, removing pauses and smoothing elevation spikes — with a live before/after preview. Runs in your browser, nothing uploaded." />
+
+  <link rel="canonical" href="https://guaruna.com/gpx-cleaner" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Guaruna" />
+  <meta property="og:title" content="GPX Cleaner — Simplify &amp; Reduce GPX File Size" />
+  <meta property="og:description"
+    content="Simplify a GPX, remove pauses and smooth elevation to shrink the file. In your browser, nothing uploaded." />
+  <meta property="og:url" content="https://guaruna.com/gpx-cleaner" />
+  <meta property="og:image" content="https://guaruna.com/og-image.svg" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://a.tile.openstreetmap.org" crossorigin />
+  <link rel="preconnect" href="https://b.tile.openstreetmap.org" crossorigin />
+  <link rel="preconnect" href="https://c.tile.openstreetmap.org" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/styles.css" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "GPX Cleaner",
+  "url": "https://guaruna.com/gpx-cleaner",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+</head>
+
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="site-header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="Guaruna home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2h4" />
+            <path d="M12 14l3-3" />
+            <circle cx="12" cy="14" r="8" />
+          </svg></span>
+        <span class="brand-name">Guaruna</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="/#tools">Tools</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
+        aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="tool-hero">
+      <div class="container">
+        <p class="breadcrumb"><a href="/">Home</a> / GPX cleaner</p>
+        <h1>GPX cleaner</h1>
+        <p class="lede">Shrink a heavy <code>.gpx</code>: simplify the track, drop the pauses, and smooth out elevation
+          spikes — with a live before/after on the map. Everything runs in your browser.</p>
+      </div>
+    </section>
+
+    <section class="gpx-shell">
+      <div class="container">
+        <div id="gpx-cleaner">
+
+          <div class="gpx-drop" id="cl-drop">
+            <svg class="gpx-drop-illu" width="120" height="90" viewBox="0 0 120 90" fill="none" aria-hidden="true">
+              <path d="M10 64 Q 30 18 55 46 T 110 26" stroke="#CBD5E1" stroke-width="3" stroke-linecap="round"
+                fill="none" />
+              <path d="M10 64 Q 40 40 110 26" stroke="#2F6BFF" stroke-width="3.6" stroke-linecap="round" fill="none" />
+              <circle cx="10" cy="64" r="5" fill="#11C29B" />
+              <circle cx="110" cy="26" r="5" fill="#FF5C39" />
+            </svg>
+            <h2>Drop your GPX file here</h2>
+            <p>or choose a file — nothing leaves your browser.</p>
+            <label class="btn btn-primary gpx-file-label">
+              <span>Choose .gpx file</span>
+              <input type="file" id="cl-file" accept=".gpx,application/gpx+xml" />
+            </label>
+            <p class="muted ed-drop-sub">No file? Grab one from the <a href="/gpx-database">GPX database</a>.</p>
+          </div>
+
+          <div id="cl-loading" class="gpx-loading is-hidden">
+            <div class="spinner" aria-hidden="true"></div>
+            <p>Reading route…</p>
+          </div>
+
+          <div id="cl-error" class="gpx-error is-hidden"></div>
+
+          <div id="cl-results" class="gpx-results is-hidden">
+            <div class="gpx-mapwrap">
+              <div id="cl-map" class="gpx-map"></div>
+              <div class="gpx-namechip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                  <path d="M14 3v6h6" />
+                </svg><span id="cl-name"></span></div>
+            </div>
+
+            <div class="gpx-statbar" id="cl-stats"></div>
+
+            <div class="gpx-card">
+              <div class="ed-card-head">
+                <h3>Clean-up options</h3>
+                <button type="button" id="cl-reset" class="btn btn-ghost btn-sm">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
+                  Load another
+                </button>
+              </div>
+
+              <div class="cl-control">
+                <label for="cl-tol">Simplify tolerance <span class="cl-tolval" id="cl-tolval">5 m</span></label>
+                <input type="range" class="cl-range" id="cl-tol" min="0" max="50" step="1" value="5" />
+                <p class="muted" style="font-size:.82rem; margin:8px 0 0">Higher keeps fewer points by dropping detail
+                  finer than this distance.</p>
+              </div>
+
+              <div class="cl-divider"></div>
+
+              <label class="cl-check">
+                <input type="checkbox" id="cl-pause" />
+                <span class="cl-check-main"><strong>Remove pauses</strong><span>Drop points logged while you were
+                    stopped.</span></span>
+              </label>
+              <label class="cl-check">
+                <input type="checkbox" id="cl-smooth" />
+                <span class="cl-check-main"><strong>Smooth elevation</strong><span>Average out noisy GPS altitude
+                    spikes.</span></span>
+              </label>
+
+              <div class="cl-divider"></div>
+
+              <div class="ed-allrow">
+                <div class="field"><label for="cl-fname">Output filename</label>
+                  <div class="ed-namerow"><input class="input" type="text" id="cl-fname"
+                      placeholder="route-clean" /><span class="ed-ext mono">.gpx</span></div>
+                </div>
+                <button type="button" id="cl-go" class="btn btn-primary">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <path d="M7 10l5 5 5-5" />
+                    <path d="M12 15V3" />
+                  </svg>
+                  Download cleaned GPX
+                </button>
+              </div>
+              <div class="ed-success is-hidden" id="cl-done"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:10px">
+      <div class="container narrow prose">
+        <h2>Why simplify a GPX?</h2>
+        <p>Watches and phones log a point every second, so a long route can carry tens of thousands of points and weigh
+          several megabytes — too heavy for some GPS devices, route planners and upload limits. The cleaner uses the
+          Ramer-Douglas-Peucker algorithm to drop points that don't change the shape of the line, so the route looks
+          identical but the file is a fraction of the size.</p>
+        <h3>Remove pauses and smooth elevation</h3>
+        <p>Stopped at a junction or a coffee break? Those clustered points add weight and mess up stats. Removing pauses
+          drops them. Smoothing averages out the jagged altitude readings GPS units are prone to, for a cleaner
+          elevation profile.</p>
+        <p class="muted">Want a different file type instead? Use the <a href="/gpx-converter">GPX converter</a>. Need to
+          crop or split? Try the <a href="/gpx-editor">GPX editor</a>.</p>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2 style="margin-bottom:20px">Frequently asked questions</h2>
+        <div class="faq">
+          <details>
+            <summary>How do I reduce the size of a GPX file?</summary>
+            <p>Raise the simplify tolerance. It removes redundant points with the Ramer-Douglas-Peucker algorithm
+              without changing the shape of your route.</p>
+          </details>
+          <details>
+            <summary>Will simplifying change my route?</summary>
+            <p>No. The line keeps its shape. You control how aggressive the simplification is and you see the before and
+              after live on the map.</p>
+          </details>
+          <details>
+            <summary>Can it remove pauses and smooth elevation?</summary>
+            <p>Yes, both are optional toggles, handy for cleaning up a noisy recording.</p>
+          </details>
+          <details>
+            <summary>Is my file uploaded?</summary>
+            <p>No. Everything runs in your browser and your file is never sent anywhere.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I reduce the size of a GPX file?","acceptedAnswer":{"@type":"Answer","text":"Raise the simplify tolerance. It removes redundant points with the Ramer-Douglas-Peucker algorithm without changing the shape of your route."}},{"@type":"Question","name":"Will simplifying change my route?","acceptedAnswer":{"@type":"Answer","text":"No. The line keeps its shape. You control how aggressive the simplification is and you see the before and after live on the map."}},{"@type":"Question","name":"Can it remove pauses and smooth elevation?","acceptedAnswer":{"@type":"Answer","text":"Yes, both are optional toggles, handy for cleaning up a noisy recording."}},{"@type":"Question","name":"Is my file uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. Everything runs in your browser and your file is never sent anywhere."}}]}
+  </script>
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://guaruna.com/"},{"@type":"ListItem","position":2,"name":"GPX cleaner","item":"https://guaruna.com/gpx-cleaner"}]}
+  </script>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="/" aria-label="Guaruna home"><span class="brand-mark" aria-hidden="true"><svg
+              viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2h4" />
+              <path d="M12 14l3-3" />
+              <circle cx="12" cy="14" r="8" />
+            </svg></span><span class="brand-name">Guaruna</span></a>
+        <p class="footer-tag">Free running tools that run entirely in your browser — nothing uploaded.</p>
+      </div>
+      <nav aria-label="Footer — tools">
+        <p class="footer-title">Tools</p>
+        <a href="/gpx-analyzer">GPX viewer</a>
+        <a href="/gpx-editor">GPX editor</a>
+        <a href="/gpx-converter">GPX converter</a>
+        <a href="/gpx-cleaner">GPX cleaner</a>
+        <a href="/race-planner">Race planner</a>
+        <a href="/race-predictor">Race predictor</a>
+        <a href="/heart-rate-zones">Heart-rate zones</a>
+        <a href="/pace-converter">Pace converter</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <nav aria-label="Footer — project">
+        <p class="footer-title">Project</p>
+        <a href="https://github.com/ynoh-tna/guaruna" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ynoh-tna/guaruna/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
+        <a href="https://github.com/ynoh-tna/guaruna#readme" target="_blank" rel="noopener">Self-host</a>
+      </nav>
+      <div>
+        <p class="footer-title">Contact</p>
+        <a href="#" data-u="hello" data-d="guaruna.com" data-subject="Hello Guaruna">Email us</a>
+        <!-- Ko-fi support button (temporarily disabled, re-enable by removing these comment markers)
+      <a class="kofi-btn" href="https://ko-fi.com/D5N820VX7W" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
+      -->
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Guaruna. All rights reserved.</p>
+      <p>Running tools &middot; GPX cleaning</p>
+    </div>
+  </footer>
+
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="/script.js" defer></script>
+  <script src="/tools.js" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2F6BFF" />
+
+  <title>GPX Viewer — Map, Elevation, Pace &amp; Splits | Guaruna</title>
+  <meta name="description"
+    content="Free online GPX viewer. Drop a .gpx file to see your route on a real map, with distance, elevation gain/loss, pace, an elevation profile and per-km splits. Runs in your browser — nothing is uploaded." />
+
+  <link rel="canonical" href="https://guaruna.com/gpx-analyzer" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Guaruna" />
+  <meta property="og:title" content="GPX Viewer — Map, Elevation, Pace &amp; Splits" />
+  <meta property="og:description"
+    content="Drop a .gpx to see your route on a real map, with elevation, pace and splits — all in your browser." />
+  <meta property="og:url" content="https://guaruna.com/gpx-analyzer" />
+  <meta property="og:image" content="https://guaruna.com/og-image.svg" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://a.tile.openstreetmap.org" crossorigin />
+  <link rel="preconnect" href="https://b.tile.openstreetmap.org" crossorigin />
+  <link rel="preconnect" href="https://c.tile.openstreetmap.org" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/styles.css" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "GPX Viewer",
+  "url": "https://guaruna.com/gpx-analyzer",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+</head>
+
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="site-header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="Guaruna home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2h4" />
+            <path d="M12 14l3-3" />
+            <circle cx="12" cy="14" r="8" />
+          </svg></span>
+        <span class="brand-name">Guaruna</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="/#tools">Tools</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
+        aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="tool-hero">
+      <div class="container">
+        <p class="breadcrumb"><a href="/">Home</a> / GPX viewer</p>
+        <h1>GPX viewer</h1>
+        <p class="lede">Drop a <code>.gpx</code> from your watch, Strava or Komoot to see your route on a real map, with
+          distance, elevation, pace and per-km splits. Everything runs in your browser — your file is never uploaded.
+        </p>
+      </div>
+    </section>
+
+    <section class="gpx-shell">
+      <div class="container">
+        <div id="gpx-analyzer">
+
+          <div class="gpx-drop" id="gpx-drop">
+            <svg class="gpx-drop-illu" width="120" height="90" viewBox="0 0 120 90" fill="none" aria-hidden="true">
+              <path d="M10 70 Q 30 30 55 48 T 110 22" stroke="#11C29B" stroke-width="3.5" stroke-linecap="round"
+                stroke-linejoin="round" fill="none" />
+              <circle cx="10" cy="70" r="5" fill="#11C29B" />
+              <path d="M110 22 a7 7 0 1 0 0.01 0" fill="#FF5C39" />
+              <path d="M110 14 l0 -9 m-5 4 l5 -5 5 5" stroke="#FF5C39" stroke-width="2.4" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <g opacity="0.5" stroke="#2F6BFF" stroke-width="2" stroke-linecap="round">
+                <path d="M30 80h60" />
+                <path d="M44 86h32" />
+              </g>
+            </svg>
+            <h2>Drop your GPX file here</h2>
+            <p>or choose a file — nothing leaves your browser.</p>
+            <label class="btn btn-primary gpx-file-label">
+              <span>Choose .gpx file</span>
+              <input type="file" id="gpx-file" accept=".gpx,application/gpx+xml" />
+            </label>
+            <p class="muted" style="margin:14px 0 0; font-size:.9rem">No file? Try one from the <a
+                href="/gpx-database">GPX database</a>.</p>
+          </div>
+
+          <div id="gpx-loading" class="gpx-loading is-hidden">
+            <div class="spinner" aria-hidden="true"></div>
+            <p>Loading route…</p>
+          </div>
+
+          <div id="gpx-error" class="gpx-error is-hidden"></div>
+
+          <div id="gpx-results" class="gpx-results is-hidden">
+            <div class="gpx-mapwrap">
+              <div id="gpx-map" class="gpx-map"></div>
+              <div class="gpx-namechip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                  <path d="M14 3v6h6" />
+                </svg><span id="gpx-name"></span></div>
+            </div>
+
+            <div class="gpx-actions">
+              <span class="gpx-country is-hidden" id="gpx-country"></span>
+              <a class="btn btn-primary gpx-dl is-hidden" id="gpx-download" download>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3v12" />
+                  <path d="M7 11l5 5 5-5" />
+                  <path d="M5 21h14" />
+                </svg>
+                Download GPX
+              </a>
+            </div>
+
+            <div class="gpx-statbar" id="gpx-stats"></div>
+
+            <div class="gpx-lower">
+              <div class="gpx-card" id="gpx-ele-section">
+                <h3>Elevation profile</h3>
+                <div id="gpx-elevation"></div>
+              </div>
+
+              <div class="gpx-card">
+                <h3>Splits</h3>
+                <p id="gpx-splits-note" class="muted is-hidden" style="font-size:.9rem">This file has no timestamps, so
+                  per-km pace isn't available — distance and altitude only.</p>
+                <div class="gpx-splits-wrap">
+                  <table class="data-table">
+                    <thead id="gpx-splits-head"></thead>
+                    <tbody id="gpx-splits"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:10px">
+      <div class="container narrow prose">
+        <h2>Private by design</h2>
+        <p>The GPX file is read and analysed entirely in your browser with JavaScript — it is never sent to any server.
+          The map tiles come from OpenStreetMap; only the map view you see is requested, never your file.</p>
+        <h3>Where to get a GPX file</h3>
+        <p>Export one from Garmin Connect, Strava (open an activity → "Export GPX"), Komoot, Wahoo or Coros. Or grab a
+          ready-made route from the <a href="/gpx-database">GPX database</a>.</p>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2 style="margin-bottom:20px">Frequently asked questions</h2>
+        <div class="faq">
+          <details>
+            <summary>Is my GPX file uploaded anywhere?</summary>
+            <p>No. The file is read and analysed entirely in your browser with JavaScript, so it is never sent to a
+              server.</p>
+          </details>
+          <details>
+            <summary>Is the GPX viewer free?</summary>
+            <p>Yes, completely free, with no account and no file limits.</p>
+          </details>
+          <details>
+            <summary>What can I see from a GPX file?</summary>
+            <p>Your route on an OpenStreetMap map, total distance, elevation gain and loss, moving pace when the file
+              has timestamps, an elevation profile, and per-kilometre splits.</p>
+          </details>
+          <details>
+            <summary>Where can I get a GPX file?</summary>
+            <p>Export one from Garmin Connect, Strava, Komoot, Wahoo or Coros, or grab a ready-made route from the
+              Guaruna GPX database.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is my GPX file uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No. The file is read and analysed entirely in your browser with JavaScript, so it is never sent to a server."}},{"@type":"Question","name":"Is the GPX viewer free?","acceptedAnswer":{"@type":"Answer","text":"Yes, completely free, with no account and no file limits."}},{"@type":"Question","name":"What can I see from a GPX file?","acceptedAnswer":{"@type":"Answer","text":"Your route on an OpenStreetMap map, total distance, elevation gain and loss, moving pace when the file has timestamps, an elevation profile, and per-kilometre splits."}},{"@type":"Question","name":"Where can I get a GPX file?","acceptedAnswer":{"@type":"Answer","text":"Export one from Garmin Connect, Strava, Komoot, Wahoo or Coros, or grab a ready-made route from the Guaruna GPX database."}}]}
+  </script>
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://guaruna.com/"},{"@type":"ListItem","position":2,"name":"GPX viewer","item":"https://guaruna.com/gpx-analyzer"}]}
+  </script>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="/" aria-label="Guaruna home"><span class="brand-mark" aria-hidden="true"><svg
+              viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2h4" />
+              <path d="M12 14l3-3" />
+              <circle cx="12" cy="14" r="8" />
+            </svg></span><span class="brand-name">Guaruna</span></a>
+        <p class="footer-tag">Free running tools that run entirely in your browser — nothing uploaded.</p>
+      </div>
+      <nav aria-label="Footer — tools">
+        <p class="footer-title">Tools</p>
+        <a href="/gpx-analyzer">GPX viewer</a>
+        <a href="/gpx-editor">GPX editor</a>
+        <a href="/gpx-converter">GPX converter</a>
+        <a href="/gpx-cleaner">GPX cleaner</a>
+        <a href="/race-planner">Race planner</a>
+        <a href="/race-predictor">Race predictor</a>
+        <a href="/heart-rate-zones">Heart-rate zones</a>
+        <a href="/pace-converter">Pace converter</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <nav aria-label="Footer — project">
+        <p class="footer-title">Project</p>
+        <a href="https://github.com/ynoh-tna/guaruna" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ynoh-tna/guaruna/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
+        <a href="https://github.com/ynoh-tna/guaruna#readme" target="_blank" rel="noopener">Self-host</a>
+      </nav>
+      <div>
+        <p class="footer-title">Contact</p>
+        <a href="#" data-u="hello" data-d="guaruna.com" data-subject="Hello Guaruna">Email us</a>
+        <!-- Ko-fi support button (temporarily disabled, re-enable by removing these comment markers)
+      <a class="kofi-btn" href="https://ko-fi.com/D5N820VX7W" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
+      -->
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Guaruna. All rights reserved.</p>
+      <p>Running tools &middot; GPX analysis</p>
+    </div>
+  </footer>
+
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="/script.js" defer></script>
+  <script src="/tools.js" defer></script>
+</body>
+
+</html>

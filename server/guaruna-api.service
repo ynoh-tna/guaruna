@@ -1,0 +1,27 @@
+# Guaruna GPX database API — systemd unit
+# Install:
+#   python3 -m venv /var/www/guaruna/server/.venv
+#   /var/www/guaruna/server/.venv/bin/pip install -r /var/www/guaruna/server/requirements.txt
+#   cp /var/www/guaruna/server/guaruna-api.service /etc/systemd/system/
+#   # edit GUARUNA_ADMIN_TOKEN below, then:
+#   systemctl daemon-reload && systemctl enable --now guaruna-api
+#
+# The web user must be able to write uploads + db:
+#   chown -R www-data:www-data /var/www/guaruna/routes/uploads /var/www/guaruna/server/data
+
+[Unit]
+Description=Guaruna GPX database API
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/guaruna
+Environment=GUARUNA_ADMIN_TOKEN=change-me-to-a-long-secret
+ExecStart=/var/www/guaruna/server/.venv/bin/uvicorn server.app:app --host 127.0.0.1 --port 8001
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

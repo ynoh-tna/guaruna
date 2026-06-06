@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+
+# GPX database backend — runtime data (user uploads, SQLite db, venv)
+/public/routes/uploads/*
+!/public/routes/uploads/.gitkeep
+/server/data/
+/server/.venv/
+__pycache__/
+*.pyc
+
+# Docker bind-mount data (created by `docker compose up`)
+/data/
+/uploads/

@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2F6BFF" />
+
+  <title>Race Time Predictor — Predict 5K, 10K, Half &amp; Marathon Times | Guaruna</title>
+  <meta name="description"
+    content="Free race time predictor. Enter a recent result and get your predicted times for 5K, 10K, half marathon, marathon and more, using Riegel's formula. Runs in your browser." />
+
+  <link rel="canonical" href="https://guaruna.com/race-predictor" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Guaruna" />
+  <meta property="og:title" content="Race Time Predictor — 5K to Marathon" />
+  <meta property="og:description"
+    content="Enter a recent result, get predicted times across distances with Riegel's formula." />
+  <meta property="og:url" content="https://guaruna.com/race-predictor" />
+  <meta property="og:image" content="https://guaruna.com/og-image.svg" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="/styles.css" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Race Time Predictor",
+  "url": "https://guaruna.com/race-predictor",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+</head>
+
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="site-header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="Guaruna home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2h4" />
+            <path d="M12 14l3-3" />
+            <circle cx="12" cy="14" r="8" />
+          </svg></span>
+        <span class="brand-name">Guaruna</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="/#tools">Tools</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
+        aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="tool-hero">
+      <div class="container">
+        <p class="breadcrumb"><a href="/">Home</a> / Race predictor</p>
+        <h1>Race time predictor</h1>
+        <p class="lede">Enter a recent race result and see your predicted times from 1 mile to 50K, using Riegel's
+          proven formula. A quick reality check for your next goal.</p>
+      </div>
+    </section>
+
+    <section class="tool-shell">
+      <div class="container">
+        <div id="race-predictor" class="tool-grid">
+
+          <form class="panel">
+            <h2>A recent result</h2>
+
+            <div class="field">
+              <label for="rp-distance">Distance</label>
+              <div class="field-row">
+                <input class="input" id="rp-distance" type="number" min="0" step="0.01" inputmode="decimal"
+                  placeholder="10" />
+                <div class="segmented" data-segmented="rp-unit" role="group" aria-label="Distance unit">
+                  <button type="button" data-val="km" aria-pressed="true">km</button>
+                  <button type="button" data-val="mi" aria-pressed="false">mi</button>
+                </div>
+              </div>
+              <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap">
+                <button type="button" class="btn btn-ghost" data-preset-km="5"
+                  style="padding:7px 13px; font-size:.85rem">5K</button>
+                <button type="button" class="btn btn-ghost" data-preset-km="10"
+                  style="padding:7px 13px; font-size:.85rem">10K</button>
+                <button type="button" class="btn btn-ghost" data-preset-km="21.0975"
+                  style="padding:7px 13px; font-size:.85rem">Half</button>
+                <button type="button" class="btn btn-ghost" data-preset-km="42.195"
+                  style="padding:7px 13px; font-size:.85rem">Marathon</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Your time <span class="hint">hrs / min / sec</span></label>
+              <div class="time-inputs">
+                <div><input class="input mono" id="rp-h" type="number" min="0" inputmode="numeric" placeholder="0" />
+                  <div class="sub">hrs</div>
+                </div>
+                <div><input class="input mono" id="rp-m" type="number" min="0" inputmode="numeric" placeholder="45" />
+                  <div class="sub">min</div>
+                </div>
+                <div><input class="input mono" id="rp-s" type="number" min="0" inputmode="numeric" placeholder="00" />
+                  <div class="sub">sec</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="rp-k">Fatigue factor <span class="hint">advanced — 1.06 is standard</span></label>
+              <input class="input mono" id="rp-k" type="number" min="1" max="1.2" step="0.01" value="1.06" />
+            </div>
+
+            <button class="btn btn-primary btn-block" type="submit">Predict my times</button>
+          </form>
+
+          <div class="panel panel-result">
+            <h2>Predicted times</h2>
+            <div id="rp-empty" class="result-empty">Enter a recent result to see your predictions.</div>
+            <div id="rp-results" class="is-hidden">
+              <div class="readout">
+                <div class="big" id="rp-big">—</div>
+                <div class="unit" id="rp-big-unit">predicted marathon</div>
+              </div>
+              <div class="result-grid" id="rp-grid"></div>
+              <div class="gpx-splits-wrap" style="margin-top:22px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Distance</th>
+                      <th>Time</th>
+                      <th>Pace</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rp-splits"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:10px">
+      <div class="container narrow prose">
+        <h2>How the prediction works</h2>
+        <p>Guaruna uses <strong>Pete Riegel's formula</strong>: T2 = T1 &times; (D2 / D1)<sup>1.06</sup>. In plain
+          terms, it takes how fast you ran one distance and scales it to another, adding a little slowdown for longer
+          efforts. It's the same maths behind most race calculators and it's remarkably accurate when your fitness and
+          the conditions are similar.</p>
+        <h3>Getting a realistic number</h3>
+        <p>Use a recent, all-out result over a distance not too far from your target — predicting a marathon from a 5K
+          is a stretch, predicting it from a half is solid. The fatigue factor (1.06 by default) controls how much you
+          fade as distance grows; bump it up if you fade hard late, drop it toward 1.05 if you're an endurance
+          specialist.</p>
+        <p class="muted">Got your target time? Build your pacing with the <a href="/race-planner">race planner</a>, or
+          dial in effort with <a href="/heart-rate-zones">heart-rate zones</a>.</p>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2 style="margin-bottom:20px">Frequently asked questions</h2>
+        <div class="faq">
+          <details>
+            <summary>How accurate is the race time prediction?</summary>
+            <p>It uses Riegel's formula and is accurate when your fitness and the conditions are similar and the input
+              distance is not too far from the target.</p>
+          </details>
+          <details>
+            <summary>What formula does it use?</summary>
+            <p>Riegel: predicted time equals your known time times the distance ratio raised to the power 1.06. You can
+              adjust that fatigue factor.</p>
+          </details>
+          <details>
+            <summary>Can I predict a marathon from a half marathon?</summary>
+            <p>Yes, and a half marathon is a far more reliable input than a 5K for a marathon prediction.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How accurate is the race time prediction?","acceptedAnswer":{"@type":"Answer","text":"It uses Riegel's formula and is accurate when your fitness and the conditions are similar and the input distance is not too far from the target."}},{"@type":"Question","name":"What formula does it use?","acceptedAnswer":{"@type":"Answer","text":"Riegel: predicted time equals your known time times the distance ratio raised to the power 1.06. You can adjust that fatigue factor."}},{"@type":"Question","name":"Can I predict a marathon from a half marathon?","acceptedAnswer":{"@type":"Answer","text":"Yes, and a half marathon is a far more reliable input than a 5K for a marathon prediction."}}]}
+  </script>
+    <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://guaruna.com/"},{"@type":"ListItem","position":2,"name":"Race predictor","item":"https://guaruna.com/race-predictor"}]}
+  </script>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="/" aria-label="Guaruna home"><span class="brand-mark" aria-hidden="true"><svg
+              viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2h4" />
+              <path d="M12 14l3-3" />
+              <circle cx="12" cy="14" r="8" />
+            </svg></span><span class="brand-name">Guaruna</span></a>
+        <p class="footer-tag">Free running tools that run entirely in your browser — nothing uploaded.</p>
+      </div>
+      <nav aria-label="Footer — tools">
+        <p class="footer-title">Tools</p>
+        <a href="/gpx-analyzer">GPX viewer</a>
+        <a href="/gpx-editor">GPX editor</a>
+        <a href="/gpx-converter">GPX converter</a>
+        <a href="/gpx-cleaner">GPX cleaner</a>
+        <a href="/race-planner">Race planner</a>
+        <a href="/race-predictor">Race predictor</a>
+        <a href="/heart-rate-zones">Heart-rate zones</a>
+        <a href="/pace-converter">Pace converter</a>
+        <a href="/gpx-database">GPX database</a>
+      </nav>
+      <nav aria-label="Footer — project">
+        <p class="footer-title">Project</p>
+        <a href="https://github.com/ynoh-tna/guaruna" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ynoh-tna/guaruna/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
+        <a href="https://github.com/ynoh-tna/guaruna#readme" target="_blank" rel="noopener">Self-host</a>
+      </nav>
+      <div>
+        <p class="footer-title">Contact</p>
+        <a href="#" data-u="hello" data-d="guaruna.com" data-subject="Hello Guaruna">Email us</a>
+        <!-- Ko-fi support button (temporarily disabled, re-enable by removing these comment markers)
+      <a class="kofi-btn" href="https://ko-fi.com/D5N820VX7W" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
+      -->
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Guaruna. All rights reserved.</p>
+      <p>Running tools &middot; Race prediction</p>
+    </div>
+  </footer>
+
+  <script src="/script.js" defer></script>
+  <script src="/tools.js" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "Guaruna — Running Tools",
+  "short_name": "Guaruna",
+  "description": "Free running tools: GPX analyzer with a real map, heart-rate zones and a pace converter.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0B1220",
+  "theme_color": "#2F6BFF",
+  "lang": "en",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,16 @@
+services:
+  guaruna:
+    build: .
+    image: guaruna
+    container_name: guaruna
+    ports:
+      - "8123:8001"          # open http://localhost:8123
+    environment:
+      # Set a long random secret to enable route deletion (moderation).
+      # Then open /gpx-database?admin=THIS_VALUE to get delete buttons.
+      # Leave empty to disable deletion entirely.
+      GUARUNA_ADMIN_TOKEN: ""
+    volumes:
+      - ./data:/app/server/data          # SQLite database (persisted)
+      - ./uploads:/app/public/routes/uploads    # user-uploaded GPX (persisted)
+    restart: unless-stopped
