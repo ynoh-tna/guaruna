@@ -1,10 +1,9 @@
 /* =========================================================
    Guaruna — GPX database: route detail drawer
-   Mini-map + elevation profile + stats + community photos
-   (each photo carries a pseudo + a note, e.g. access / parking / place).
-   Attaches to window.GDB. Shared helpers (api, el, miniMap, openLightbox,
-   fmtDuration, adminToken, refresh) come from database.js, resolved at call
-   time. User text -> textContent (no XSS).
+   Mini-map + elevation profile + stats + community photos (via GuPhotos).
+   Attaches to window.GDB. Shared helpers (api, miniMap, fmtDuration,
+   refresh) come from database.js; GuPhotos comes from photos.js.
+   User text -> textContent (no XSS).
    ========================================================= */
 (function () {
   'use strict';
@@ -16,27 +15,11 @@
   var IC = {
     pin: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg>',
     dl: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>',
-    view: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
-    cam: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>'
+    view: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>'
   };
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function api(u, o) { return GDB.api(u, o); }
-
-  function getPseudo() { try { return localStorage.getItem('guaruna-pseudo') || ''; } catch (e) { return ''; } }
-  function setPseudo(v) { try { localStorage.setItem('guaruna-pseudo', v); } catch (e) {} }
-
-  // upload a list of File objects to a route's photos (pseudo + note apply to the batch)
-  GDB.uploadRoutePhotos = function (rid, files, pseudo, note) {
-    var out = [];
-    return files.reduce(function (chain, f) {
-      return chain.then(function () {
-        var fd = new FormData(); fd.append('file', f); fd.append('pseudo', pseudo || ''); fd.append('note', note || '');
-        return api('/api/routes/' + encodeURIComponent(rid) + '/photos', { method: 'POST', body: fd })
-          .then(function (res) { if (res.ok && res.data) out.push(res.data); });
-      });
-    }, Promise.resolve()).then(function () { return out; });
-  };
 
   // ---- elevation profile (from [[dist_km, ele_m], ...]) ----
   function renderProfile(holder, profile) {
@@ -76,29 +59,6 @@
   }
 
   function metric(k, v) { var m = el('div', 'metric'); m.appendChild(el('div', 'k', k)); m.appendChild(el('div', 'v', v)); return m; }
-
-  // ---- a community photo card (image + pseudo + note) ----
-  function photoCard(p, onChange) {
-    var card = el('div', 'photo-card');
-    var th = el('div', 'photo-thumb');
-    var img = el('img'); img.loading = 'lazy'; img.src = p.thumb || p.url; img.alt = p.note || 'Route photo';
-    img.addEventListener('click', function () { GDB.openLightbox(p.url); });
-    th.appendChild(img); card.appendChild(th);
-    var meta = el('div', 'pc-meta');
-    meta.appendChild(el('div', 'pc-pseudo', p.pseudo || 'Anonyme'));
-    if (p.note) meta.appendChild(el('div', 'pc-note', p.note));
-    card.appendChild(meta);
-    if (GDB.adminToken) {
-      var del = el('button', 'photo-del pc-del', '×'); del.type = 'button'; del.title = 'Delete photo (admin)';
-      del.addEventListener('click', function () {
-        if (!window.confirm('Delete this photo?')) return;
-        api('/api/photos/' + encodeURIComponent(p.id), { method: 'DELETE', headers: { 'X-Admin-Token': GDB.adminToken } })
-          .then(function (res) { if (res.ok) { card.remove(); if (onChange) onChange(); } });
-      });
-      card.appendChild(del);
-    }
-    return card;
-  }
 
   // ========================================================
   // Detail drawer
@@ -149,7 +109,8 @@
 
     // actions
     var actions = el('div', 'rd-actions');
-    var viewUrl = '/gpx-analyzer?gpx=' + route.url + '&name=' + encodeURIComponent(route.name || '') + (route.location ? '&country=' + encodeURIComponent(route.location) : '');
+    var viewUrl = '/gpx-analyzer?gpx=' + route.url + '&rid=' + encodeURIComponent(route.id) +
+      '&name=' + encodeURIComponent(route.name || '') + (route.location ? '&country=' + encodeURIComponent(route.location) : '');
     var view = el('a', 'btn btn-primary btn-sm'); view.href = viewUrl; view.innerHTML = IC.view + ' Open in viewer'; actions.appendChild(view);
     var dl = el('a', 'btn btn-ghost btn-sm'); dl.href = route.url; dl.setAttribute('download', ''); dl.innerHTML = IC.dl + ' Download'; actions.appendChild(dl);
     body.appendChild(actions);
@@ -170,65 +131,9 @@
       var prof = el('div', 'rd-profile gpx-card'); body.appendChild(prof); renderProfile(prof, full.profile);
     }
 
-    // ---- photos & info ----
-    var st = el('div', 'rd-section-title');
-    st.appendChild(el('span', null, 'Photos & info'));
-    var countLbl = el('span', 'rr-diff', ''); st.appendChild(countLbl);
-    body.appendChild(st);
-
-    var hint = el('p', 'muted'); hint.style.fontSize = '.85rem'; hint.style.margin = '-4px 0 12px';
-    hint.textContent = 'Share a photo and add the access point, parking, the trailhead address or any tip.';
-    body.appendChild(hint);
-
-    var gallery = el('div', 'photo-cards');
-    body.appendChild(gallery);
-
-    function refreshPhotos() {
-      api('/api/routes/' + encodeURIComponent(route.id) + '/photos').then(function (res) {
-        var items = (res && res.ok && res.data && res.data.items) ? res.data.items : [];
-        gallery.innerHTML = '';
-        countLbl.textContent = items.length ? (items.length + ' photo' + (items.length === 1 ? '' : 's')) : '';
-        if (!items.length) { gallery.appendChild(el('p', 'muted', 'No photos yet — be the first to add one.')); }
-        else items.forEach(function (p) { gallery.appendChild(photoCard(p, function () { refreshPhotos(); if (GDB.refresh) GDB.refresh(); })); });
-      });
-    }
-    refreshPhotos();
-
-    // add form
-    var form = el('div', 'photo-add-form');
-    var fp = el('div', 'field'); fp.appendChild(el('label', null, 'Your name / pseudo'));
-    var pseudo = el('input', 'input'); pseudo.type = 'text'; pseudo.maxLength = 40; pseudo.placeholder = 'e.g. Alex'; pseudo.value = getPseudo();
-    fp.appendChild(pseudo); form.appendChild(fp);
-    var fn = el('div', 'field'); fn.appendChild(el('label', null, 'Note (place, access, parking, tip…)'));
-    var note = el('textarea', 'input'); note.maxLength = 600; note.placeholder = 'e.g. Park at the lake car park, trail starts behind the kiosk.';
-    fn.appendChild(note); form.appendChild(fn);
-
-    var picked = [];
-    var input = el('input'); input.type = 'file'; input.accept = 'image/*'; input.multiple = true; input.style.display = 'none';
-    var bar = el('div', 'photo-add-bar');
-    var choose = el('button', 'btn btn-ghost btn-sm', ''); choose.type = 'button'; choose.innerHTML = IC.cam + ' Choose photo(s)';
-    var chosen = el('span', 'muted'); chosen.style.fontSize = '.85rem';
-    var add = el('button', 'btn btn-primary btn-sm', 'Add'); add.type = 'button'; add.disabled = true;
-    choose.addEventListener('click', function () { input.click(); });
-    input.addEventListener('change', function () {
-      picked = Array.prototype.slice.call(input.files).slice(0, 8);
-      chosen.textContent = picked.length ? (picked.length + ' selected') : '';
-      add.disabled = !picked.length;
-    });
-    add.addEventListener('click', function () {
-      if (!picked.length) return;
-      setPseudo(pseudo.value.trim());
-      add.disabled = true; add.textContent = 'Uploading…';
-      GDB.uploadRoutePhotos(route.id, picked, pseudo.value.trim(), note.value).then(function (added) {
-        picked = []; input.value = ''; chosen.textContent = ''; note.value = '';
-        add.textContent = 'Add';
-        if (!added.length) window.alert('Upload failed (image too large or unsupported?).');
-        refreshPhotos(); if (GDB.refresh) GDB.refresh();
-      });
-    });
-    bar.appendChild(choose); bar.appendChild(chosen); bar.appendChild(add);
-    form.appendChild(input); form.appendChild(bar);
-    body.appendChild(form);
+    // community photos & info (shared module)
+    var photos = el('div'); body.appendChild(photos);
+    if (window.GuPhotos) GuPhotos.mount(photos, route.id, { onChange: function () { if (GDB.refresh) GDB.refresh(); } });
   }
 
   GDB.Detail = { open: open, close: close };
