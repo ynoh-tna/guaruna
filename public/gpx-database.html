@@ -70,8 +70,8 @@
       <div class="container">
         <p class="breadcrumb"><a href="/">Home</a> / GPX database</p>
         <h1>GPX database</h1>
-        <p class="lede">Find routes inside any area on the map, filter for ideas, then keep a souvenir and a history of
-          the outings you've done.</p>
+        <p class="lede">Find routes inside any area on the map, filter for ideas, and add photos &amp; tips (access,
+          parking, trailhead) to any route.</p>
       </div>
     </section>
 
@@ -79,18 +79,10 @@
       <div class="container">
         <div id="gpx-db">
 
-          <!-- Segments + actions -->
-          <div class="db-top">
-            <div class="db-segments" role="tablist" aria-label="Database views">
-              <button class="db-segment is-active" type="button" data-seg="explore" role="tab"
-                aria-selected="true">Explore</button>
-              <button class="db-segment" type="button" data-seg="journal" role="tab" aria-selected="false">My
-                outings</button>
-            </div>
-            <div class="db-top-actions">
-              <span id="db-admin-slot"></span>
-              <button class="btn btn-primary" id="db-add-btn" type="button">+ Add a route</button>
-            </div>
+          <!-- actions -->
+          <div class="db-actions-bar">
+            <span id="db-admin-slot"></span>
+            <button class="btn btn-primary" id="db-add-btn" type="button">+ Add a route</button>
           </div>
 
           <!-- ===================== EXPLORE ===================== -->
@@ -200,17 +192,7 @@
             </div>
           </div>
 
-          <!-- ===================== MY OUTINGS ===================== -->
-          <div id="view-journal" class="db-view is-hidden">
-            <div class="gpx-statbar journal-statbar" id="journal-stats"></div>
-            <div class="gpx-mapwrap journal-mapwrap">
-              <div id="journal-map" class="gpx-map"></div>
-              <div class="gpx-namechip journal-mapchip">Places you've been</div>
-            </div>
-            <p id="journal-status" class="muted db-status is-hidden"></p>
-            <div class="timeline" id="journal-timeline"></div>
-            <div class="pager" id="journal-pager"></div>
-          </div>
+          <!-- (community photos & info live in each route's detail panel) -->
 
           <!-- Route detail drawer (filled by db-detail.js) -->
           <div class="route-detail-overlay is-hidden" id="route-detail" role="dialog" aria-modal="true"
@@ -230,7 +212,7 @@
               <button class="modal-close" data-close type="button" aria-label="Close">&times;</button>
               <h2>Add a route</h2>
               <p class="muted" style="margin-bottom:18px">Upload a <code>.gpx</code> file (max 10&nbsp;MB). It becomes
-                public — please don't upload private or sensitive tracks. A souvenir is optional.</p>
+                public — please don't upload private or sensitive tracks. You can add photos &amp; info afterwards.</p>
               <form id="db-form">
                 <div class="field">
                   <label for="db-name">Route name</label>
@@ -254,13 +236,6 @@
                     </select>
                   </div>
                 </div>
-
-                <label class="souvenir-switch">
-                  <input type="checkbox" id="db-souvenir-toggle" />
-                  <span><strong>I did this — add a souvenir</strong><br />
-                    <span class="muted">Log it to your history with a note, rating and photos.</span></span>
-                </label>
-                <div class="souvenir-editor is-hidden" id="db-souv"></div>
 
                 <div id="db-form-error" class="gpx-error is-hidden" style="margin:14px 0"></div>
                 <div class="modal-actions">
@@ -286,9 +261,9 @@
               the current map view. Use the filters for distance, elevation and activity.</p>
           </details>
           <details>
-            <summary>What is a “souvenir” and a “history”?</summary>
-            <p>Mark any route as done with a date, a rating, a note and photos. It joins your outings history with totals
-              and a map of everywhere you've been.</p>
+            <summary>Can I add photos or info to a route?</summary>
+            <p>Yes. Open a route and add a photo with your name and a note — the trailhead address, parking, access or any
+              tip. Photos are resized and their EXIF/GPS data is stripped.</p>
           </details>
           <details>
             <summary>What happens to a route I upload?</summary>

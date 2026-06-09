@@ -1227,3 +1227,19 @@ input[type="range"].cl-range::-moz-range-thumb { width: 16px; height: 16px; bord
   .sv-row { grid-template-columns: 1fr; }
   .timeline-entry { flex-wrap: wrap; }
 }
+
+/* community photos on a route (detail panel) */
+.db-actions-bar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 18px; }
+.rr-photos { display: inline-flex; align-items: center; gap: 3px; margin-left: 8px; font-size: .74rem; color: var(--ink-mute); }
+.photo-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.photo-card { position: relative; display: flex; gap: 12px; align-items: flex-start; padding: 10px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg-card); }
+.photo-card .photo-thumb { width: 84px; height: 84px; flex-shrink: 0; cursor: zoom-in; }
+.pc-meta { min-width: 0; flex: 1; }
+.pc-pseudo { font-weight: 600; font-size: .9rem; color: var(--ink); }
+.pc-note { color: var(--ink-soft); font-size: .9rem; margin-top: 3px; white-space: pre-wrap; word-break: break-word; }
+.pc-del { position: static; margin-left: auto; flex-shrink: 0; }
+.photo-add-form { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px; background: var(--bg); }
+.photo-add-form .field { margin-bottom: 12px; }
+.photo-add-form textarea.input { resize: vertical; min-height: 56px; font-family: var(--font-sans); }
+.photo-add-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

@@ -4,19 +4,14 @@ Guaruna — GPX database API (FastAPI + SQLite)
 Catalog (public, anonymous):
   GET    /api/routes            -> paginated list + spatial/zone search + filters + sort
   GET    /api/routes/random     -> one random route matching optional filters ("surprise me")
-  GET    /api/routes/{id}        -> one route with full-resolution polyline
+  GET    /api/routes/{id}        -> one route with full-resolution polyline + elevation profile
   POST   /api/routes            -> upload (multipart: name, file=.gpx, optional location, activity_type)
-  DELETE /api/routes/{id}        -> moderation (requires X-Admin-Token); cascades outings + photos
+  DELETE /api/routes/{id}        -> moderation (requires X-Admin-Token); cascades the route's photos
 
-Journal (shared, no accounts — create open & rate-limited, edit/delete admin-only):
-  GET    /api/outings           -> history of outings (souvenirs), newest first
-  GET    /api/routes/{id}/outings -> outings attached to one route
-  POST   /api/outings           -> log an outing (route_id, date, rating, feeling, note, tags)
-  PATCH  /api/outings/{id}       -> edit an outing (admin)
-  DELETE /api/outings/{id}       -> delete an outing + its photos (admin)
-  POST   /api/outings/{id}/photos -> attach a photo (image; resized, EXIF/GPS stripped)
+Community photos & info (public, no accounts — add open & rate-limited, delete admin-only):
+  GET    /api/routes/{id}/photos -> photos attached to a route (each with a pseudo + note)
+  POST   /api/routes/{id}/photos -> add a photo (multipart: pseudo, note, file=image; resized, EXIF/GPS stripped)
   DELETE /api/photos/{id}        -> delete a photo (admin)
-  GET    /api/stats             -> aggregate history stats (totals, active months)
   GET    /api/health            -> {"ok": true}
 
 Uploaded GPX live under <repo>/public/routes/uploads/<uuid>.gpx and photos under
@@ -66,17 +61,19 @@ PER_PAGE = 50
 MAP_MARKER_CAP = 500                 # light=1 viewport queries return up to this many
 MAX_BYTES = 10 * 1024 * 1024         # 10 MB GPX upload cap
 MAX_NAME = 80
+MAX_NOTE = 600
+MAX_PSEUDO = 40
 RATE_MAX = 10                        # uploads ...
 RATE_WINDOW = 3600                   # ... per hour per IP
 
 MAX_PHOTO_BYTES = 8 * 1024 * 1024    # 8 MB per image
-MAX_PHOTOS_PER_OUTING = 8
+MAX_PHOTOS_PER_ROUTE = 30
+PHOTO_RATE_MAX = 30                  # photos per hour per IP
 PHOTO_MAX_DIM = 1600                 # px, longest side of the stored image
 THUMB_MAX_DIM = 480                  # px, longest side of the gallery thumbnail
 JPEG_QUALITY = 82
 
 ALLOWED_TYPES = {"run", "trail", "bike", "hike", "walk", "other"}
-FEELINGS = {"easy", "strong", "tough", "epic", "meh"}
 
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
@@ -128,28 +125,6 @@ def init_db():
             polyline       TEXT DEFAULT ''
         )"""
     )
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS outings (
-            id         TEXT PRIMARY KEY,
-            route_id   TEXT,
-            date       TEXT,
-            rating     INTEGER NOT NULL DEFAULT 0,
-            feeling    TEXT,
-            note       TEXT,
-            tags       TEXT DEFAULT '[]',
-            created_at TEXT NOT NULL
-        )"""
-    )
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS photos (
-            id         TEXT PRIMARY KEY,
-            outing_id  TEXT NOT NULL,
-            path       TEXT NOT NULL,
-            thumb_path TEXT NOT NULL,
-            ordinal    INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL
-        )"""
-    )
 
     # additive migration for databases that predate the spatial/metadata columns
     cols = {r[1] for r in conn.execute("PRAGMA table_info(routes)")}
@@ -168,15 +143,31 @@ def init_db():
         if name not in cols:
             conn.execute(f"ALTER TABLE routes ADD COLUMN {name} {decl}")
 
+    # The personal "journal" model was dropped in favour of community photos.
+    conn.execute("DROP TABLE IF EXISTS outings")
+    # photos: migrate the old (outing_id) shape -> the new (route_id, pseudo, note) one.
+    pcols = {r[1] for r in conn.execute("PRAGMA table_info(photos)")}
+    if pcols and "route_id" not in pcols:
+        conn.execute("DROP TABLE photos")
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS photos (
+            id         TEXT PRIMARY KEY,
+            route_id   TEXT NOT NULL,
+            pseudo     TEXT,
+            note       TEXT,
+            path       TEXT NOT NULL,
+            thumb_path TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )"""
+    )
+
     for stmt in (
         "CREATE INDEX IF NOT EXISTS idx_routes_bbox ON routes (min_lat,max_lat,min_lon,max_lon)",
         "CREATE INDEX IF NOT EXISTS idx_routes_center ON routes (center_lat,center_lon)",
         "CREATE INDEX IF NOT EXISTS idx_routes_created ON routes (created_at)",
         "CREATE INDEX IF NOT EXISTS idx_routes_dist ON routes (distance_km)",
         "CREATE INDEX IF NOT EXISTS idx_routes_type ON routes (activity_type)",
-        "CREATE INDEX IF NOT EXISTS idx_outings_route ON outings (route_id)",
-        "CREATE INDEX IF NOT EXISTS idx_outings_date ON outings (date)",
-        "CREATE INDEX IF NOT EXISTS idx_photos_outing ON photos (outing_id)",
+        "CREATE INDEX IF NOT EXISTS idx_photos_route ON photos (route_id)",
     ):
         conn.execute(stmt)
 
@@ -476,25 +467,13 @@ def clean_name(raw: str) -> str:
 def clean_note(raw: str) -> str:
     s = (raw or "").strip()
     s = "".join(ch for ch in s if ch in ("\n", "\t") or not (ord(ch) < 32))
-    return s[:2000]
+    return s[:MAX_NOTE]
 
 
-def clean_date(raw: str) -> str:
-    s = (raw or "").strip()[:10]
-    if re.match(r"^\d{4}-\d{2}-\d{2}$", s):
-        return s
-    return datetime.now(timezone.utc).date().isoformat()
-
-
-def parse_tags(raw: str):
-    out = []
-    for t in re.split(r"[,\n]", raw or ""):
-        t = re.sub(r"\s+", " ", t.strip())[:24]
-        if t and t not in out:
-            out.append(t)
-        if len(out) >= 12:
-            break
-    return out
+def clean_pseudo(raw: str) -> str:
+    s = re.sub(r"\s+", " ", (raw or "").strip())
+    s = "".join(ch for ch in s if ch == " " or not (ord(ch) < 32))
+    return s[:MAX_PSEUDO] or "Anonyme"
 
 
 def client_ip(req: Request) -> str:
@@ -536,6 +515,7 @@ def row_to_item(r: sqlite3.Row, light: bool = False) -> dict:
         "activity_type": _g(r, "activity_type", "other") or "other",
         "difficulty": _g(r, "difficulty", 1) or 1,
         "point_count": _g(r, "point_count", 0) or 0,
+        "photo_count": _g(r, "photo_count", 0) or 0,
         "center": ([_g(r, "center_lat"), _g(r, "center_lon")] if _g(r, "center_lat") is not None else None),
         "bbox": ([_g(r, "min_lat"), _g(r, "min_lon"), _g(r, "max_lat"), _g(r, "max_lon")]
                  if _g(r, "min_lat") is not None else None),
@@ -553,54 +533,28 @@ def row_to_item(r: sqlite3.Row, light: bool = False) -> dict:
 
 
 def photo_item(p: sqlite3.Row) -> dict:
-    return {"id": p["id"], "url": p["path"], "thumb": p["thumb_path"]}
-
-
-def outing_item(conn, o: sqlite3.Row, include_route: bool = True) -> dict:
-    try:
-        tags = json.loads(o["tags"]) if o["tags"] else []
-    except Exception:
-        tags = []
-    item = {
-        "id": o["id"],
-        "route_id": o["route_id"],
-        "date": o["date"],
-        "rating": o["rating"] or 0,
-        "feeling": o["feeling"],
-        "note": o["note"] or "",
-        "tags": tags,
-        "created_at": o["created_at"],
-        "photos": [photo_item(p) for p in conn.execute(
-            "SELECT * FROM photos WHERE outing_id=? ORDER BY ordinal, created_at", (o["id"],)).fetchall()],
+    return {
+        "id": p["id"],
+        "route_id": p["route_id"],
+        "url": p["path"],
+        "thumb": p["thumb_path"],
+        "pseudo": p["pseudo"] or "Anonyme",
+        "note": p["note"] or "",
+        "created_at": p["created_at"],
     }
-    if include_route and o["route_id"]:
-        r = conn.execute("SELECT * FROM routes WHERE id=?", (o["route_id"],)).fetchone()
-        if r:
-            try:
-                pl = json.loads(r["polyline"]) if _g(r, "polyline") else []
-            except Exception:
-                pl = []
-            item["route"] = {
-                "id": r["id"], "name": r["name"], "location": r["location"],
-                "distance_km": r["distance_km"], "elevation_gain": r["elevation_gain"],
-                "activity_type": _g(r, "activity_type", "other") or "other",
-                "center": ([_g(r, "center_lat"), _g(r, "center_lon")] if _g(r, "center_lat") is not None else None),
-                "polyline": pl,
-                "url": r["path"],
-            }
-        else:
-            item["route"] = None
-    return item
 
 
-def _delete_photos_of(conn, oid: str):
-    for p in conn.execute("SELECT * FROM photos WHERE outing_id=?", (oid,)).fetchall():
+def _delete_photos_of(conn, rid: str):
+    for p in conn.execute("SELECT * FROM photos WHERE route_id=?", (rid,)).fetchall():
         for pth in (p["path"], p["thumb_path"]):
             try:
                 (STATIC_DIR / pth.lstrip("/")).unlink(missing_ok=True)
             except OSError:
                 pass
-    conn.execute("DELETE FROM photos WHERE outing_id=?", (oid,))
+    conn.execute("DELETE FROM photos WHERE route_id=?", (rid,))
+
+
+PHOTO_COUNT_SQL = "(SELECT COUNT(*) FROM photos WHERE photos.route_id = routes.id) AS photo_count"
 
 
 # ---- app ----
@@ -679,7 +633,7 @@ def list_routes(
 
     # proximity sort: prefilter in SQL, then exact great-circle sort in Python
     if sort == "nearest" and near_pt is not None:
-        rows = conn.execute(f"SELECT * FROM routes {where}", params).fetchall()
+        rows = conn.execute(f"SELECT *, {PHOTO_COUNT_SQL} FROM routes {where}", params).fetchall()
         scored = []
         for r in rows:
             if r["center_lat"] is None:
@@ -709,7 +663,7 @@ def list_routes(
     order = order_map.get(sort, order_map["newest"])
     total = conn.execute(f"SELECT COUNT(*) AS c FROM routes {where}", params).fetchone()["c"]
     rows = conn.execute(
-        f"SELECT * FROM routes {where} ORDER BY {order} LIMIT ? OFFSET ?",
+        f"SELECT *, {PHOTO_COUNT_SQL} FROM routes {where} ORDER BY {order} LIMIT ? OFFSET ?",
         params + [cap, (page - 1) * cap],
     ).fetchall()
     conn.close()
@@ -740,7 +694,7 @@ def random_route(
         clauses.append("elevation_gain<=?"); params.append(elev_max)
     where = "WHERE " + " AND ".join(clauses)
     conn = db()
-    row = conn.execute(f"SELECT * FROM routes {where} ORDER BY RANDOM() LIMIT 1", params).fetchone()
+    row = conn.execute(f"SELECT *, {PHOTO_COUNT_SQL} FROM routes {where} ORDER BY RANDOM() LIMIT 1", params).fetchone()
     conn.close()
     if not row:
         raise HTTPException(status_code=404, detail="No routes match.")
@@ -752,7 +706,7 @@ def random_route(
 @app.get("/api/routes/{rid}")
 def get_route(rid: str):
     conn = db()
-    row = conn.execute("SELECT * FROM routes WHERE id=?", (rid,)).fetchone()
+    row = conn.execute(f"SELECT *, {PHOTO_COUNT_SQL} FROM routes WHERE id=?", (rid,)).fetchone()
     conn.close()
     if not row:
         raise HTTPException(status_code=404, detail="Not found.")
@@ -762,15 +716,54 @@ def get_route(rid: str):
     return item
 
 
-@app.get("/api/routes/{rid}/outings")
-def route_outings(rid: str):
+@app.get("/api/routes/{rid}/photos")
+def route_photos(rid: str):
     conn = db()
     rows = conn.execute(
-        "SELECT * FROM outings WHERE route_id=? ORDER BY date DESC, created_at DESC", (rid,)
+        "SELECT * FROM photos WHERE route_id=? ORDER BY created_at DESC", (rid,)
     ).fetchall()
-    items = [outing_item(conn, o, include_route=False) for o in rows]
     conn.close()
-    return {"items": items}
+    return {"items": [photo_item(p) for p in rows]}
+
+
+@app.post("/api/routes/{rid}/photos")
+async def add_photo(rid: str, request: Request, pseudo: str = Form(""), note: str = Form(""), file: UploadFile = File(...)):
+    if not _PIL_OK:
+        raise HTTPException(status_code=503, detail="Image processing unavailable.")
+    ip = client_ip(request)
+    if not rate_ok("photo:" + ip, PHOTO_RATE_MAX, RATE_WINDOW):
+        raise HTTPException(status_code=429, detail="Too many uploads. Try again later.")
+    conn = db()
+    if not conn.execute("SELECT id FROM routes WHERE id=?", (rid,)).fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Route not found.")
+    cnt = conn.execute("SELECT COUNT(*) AS c FROM photos WHERE route_id=?", (rid,)).fetchone()["c"]
+    if cnt >= MAX_PHOTOS_PER_ROUTE:
+        conn.close()
+        raise HTTPException(status_code=400, detail=f"Max {MAX_PHOTOS_PER_ROUTE} photos per route.")
+    data = await file.read()
+    if len(data) > MAX_PHOTO_BYTES:
+        conn.close()
+        raise HTTPException(status_code=413, detail="Image too large (max 8 MB).")
+    try:
+        big, thumb = _process_image(data)
+    except Exception:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid image file.")
+
+    pid = uuid.uuid4().hex
+    (PHOTOS_DIR / f"{pid}.jpg").write_bytes(big)
+    (PHOTOS_DIR / f"{pid}_t.jpg").write_bytes(thumb)
+    created = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO photos (id,route_id,pseudo,note,path,thumb_path,created_at) VALUES (?,?,?,?,?,?,?)",
+        (pid, rid, clean_pseudo(pseudo), clean_note(note),
+         f"/routes/uploads/photos/{pid}.jpg", f"/routes/uploads/photos/{pid}_t.jpg", created),
+    )
+    conn.commit()
+    p = conn.execute("SELECT * FROM photos WHERE id=?", (pid,)).fetchone()
+    conn.close()
+    return JSONResponse(status_code=201, content=photo_item(p))
 
 
 @app.post("/api/routes")
@@ -819,7 +812,7 @@ async def add_route(
          atype, meta["difficulty"], meta["point_count"], meta["polyline"]),
     )
     conn.commit()
-    row = conn.execute("SELECT * FROM routes WHERE id=?", (rid,)).fetchone()
+    row = conn.execute(f"SELECT *, {PHOTO_COUNT_SQL} FROM routes WHERE id=?", (rid,)).fetchone()
     conn.close()
     return JSONResponse(status_code=201, content=row_to_item(row))
 
@@ -837,154 +830,11 @@ def delete_route(rid: str, request: Request):
             (STATIC_DIR / row["path"].lstrip("/")).unlink(missing_ok=True)
         except OSError:
             pass
-    for o in conn.execute("SELECT id FROM outings WHERE route_id=?", (rid,)).fetchall():
-        _delete_photos_of(conn, o["id"])
-    conn.execute("DELETE FROM outings WHERE route_id=?", (rid,))
+    _delete_photos_of(conn, rid)
     conn.execute("DELETE FROM routes WHERE id=?", (rid,))
     conn.commit()
     conn.close()
     return {"deleted": rid}
-
-
-# ---- journal: outings & souvenirs ----
-@app.get("/api/outings")
-def list_outings(page: int = 1, route_id: str = ""):
-    page = max(1, page)
-    conn = db()
-    where, params = ("", [])
-    if route_id:
-        where, params = ("WHERE route_id=?", [route_id])
-    total = conn.execute(f"SELECT COUNT(*) AS c FROM outings {where}", params).fetchone()["c"]
-    rows = conn.execute(
-        f"SELECT * FROM outings {where} ORDER BY date DESC, created_at DESC LIMIT ? OFFSET ?",
-        params + [PER_PAGE, (page - 1) * PER_PAGE],
-    ).fetchall()
-    items = [outing_item(conn, o) for o in rows]
-    conn.close()
-    pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
-    return {"items": items, "total": total, "page": page, "pages": pages, "per_page": PER_PAGE}
-
-
-@app.post("/api/outings")
-def create_outing(
-    request: Request,
-    route_id: str = Form(...),
-    date: str = Form(""),
-    rating: int = Form(0),
-    feeling: str = Form(""),
-    note: str = Form(""),
-    tags: str = Form(""),
-):
-    ip = client_ip(request)
-    if not rate_ok("out:" + ip, 60, RATE_WINDOW):
-        raise HTTPException(status_code=429, detail="Too many entries. Try again later.")
-    conn = db()
-    if not conn.execute("SELECT id FROM routes WHERE id=?", (route_id,)).fetchone():
-        conn.close()
-        raise HTTPException(status_code=404, detail="Route not found.")
-    oid = uuid.uuid4().hex
-    created = datetime.now(timezone.utc).isoformat()
-    conn.execute(
-        "INSERT INTO outings (id,route_id,date,rating,feeling,note,tags,created_at) VALUES (?,?,?,?,?,?,?,?)",
-        (oid, route_id, clean_date(date), max(0, min(5, rating)),
-         (feeling if feeling in FEELINGS else None), clean_note(note),
-         json.dumps(parse_tags(tags), separators=(",", ":")), created),
-    )
-    conn.commit()
-    o = conn.execute("SELECT * FROM outings WHERE id=?", (oid,)).fetchone()
-    item = outing_item(conn, o)
-    conn.close()
-    return JSONResponse(status_code=201, content=item)
-
-
-@app.patch("/api/outings/{oid}")
-def update_outing(
-    oid: str,
-    request: Request,
-    date: Optional[str] = Form(None),
-    rating: Optional[int] = Form(None),
-    feeling: Optional[str] = Form(None),
-    note: Optional[str] = Form(None),
-    tags: Optional[str] = Form(None),
-):
-    require_admin(request)
-    conn = db()
-    if not conn.execute("SELECT id FROM outings WHERE id=?", (oid,)).fetchone():
-        conn.close()
-        raise HTTPException(status_code=404, detail="Not found.")
-    sets, params = [], []
-    if date is not None:
-        sets.append("date=?"); params.append(clean_date(date))
-    if rating is not None:
-        sets.append("rating=?"); params.append(max(0, min(5, rating)))
-    if feeling is not None:
-        sets.append("feeling=?"); params.append(feeling if feeling in FEELINGS else None)
-    if note is not None:
-        sets.append("note=?"); params.append(clean_note(note))
-    if tags is not None:
-        sets.append("tags=?"); params.append(json.dumps(parse_tags(tags), separators=(",", ":")))
-    if sets:
-        conn.execute(f"UPDATE outings SET {', '.join(sets)} WHERE id=?", params + [oid])
-        conn.commit()
-    o = conn.execute("SELECT * FROM outings WHERE id=?", (oid,)).fetchone()
-    item = outing_item(conn, o)
-    conn.close()
-    return item
-
-
-@app.delete("/api/outings/{oid}")
-def delete_outing(oid: str, request: Request):
-    require_admin(request)
-    conn = db()
-    if not conn.execute("SELECT id FROM outings WHERE id=?", (oid,)).fetchone():
-        conn.close()
-        raise HTTPException(status_code=404, detail="Not found.")
-    _delete_photos_of(conn, oid)
-    conn.execute("DELETE FROM outings WHERE id=?", (oid,))
-    conn.commit()
-    conn.close()
-    return {"deleted": oid}
-
-
-@app.post("/api/outings/{oid}/photos")
-async def add_photo(oid: str, request: Request, file: UploadFile = File(...)):
-    if not _PIL_OK:
-        raise HTTPException(status_code=503, detail="Image processing unavailable.")
-    ip = client_ip(request)
-    if not rate_ok("photo:" + ip, 60, RATE_WINDOW):
-        raise HTTPException(status_code=429, detail="Too many uploads. Try again later.")
-    conn = db()
-    if not conn.execute("SELECT id FROM outings WHERE id=?", (oid,)).fetchone():
-        conn.close()
-        raise HTTPException(status_code=404, detail="Outing not found.")
-    cnt = conn.execute("SELECT COUNT(*) AS c FROM photos WHERE outing_id=?", (oid,)).fetchone()["c"]
-    if cnt >= MAX_PHOTOS_PER_OUTING:
-        conn.close()
-        raise HTTPException(status_code=400, detail=f"Max {MAX_PHOTOS_PER_OUTING} photos per outing.")
-    data = await file.read()
-    if len(data) > MAX_PHOTO_BYTES:
-        conn.close()
-        raise HTTPException(status_code=413, detail="Image too large (max 8 MB).")
-    try:
-        big, thumb = _process_image(data)
-    except Exception:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Invalid image file.")
-
-    pid = uuid.uuid4().hex
-    (PHOTOS_DIR / f"{pid}.jpg").write_bytes(big)
-    (PHOTOS_DIR / f"{pid}_t.jpg").write_bytes(thumb)
-    path = f"/routes/uploads/photos/{pid}.jpg"
-    tpath = f"/routes/uploads/photos/{pid}_t.jpg"
-    created = datetime.now(timezone.utc).isoformat()
-    conn.execute(
-        "INSERT INTO photos (id,outing_id,path,thumb_path,ordinal,created_at) VALUES (?,?,?,?,?,?)",
-        (pid, oid, path, tpath, cnt, created),
-    )
-    conn.commit()
-    p = conn.execute("SELECT * FROM photos WHERE id=?", (pid,)).fetchone()
-    conn.close()
-    return JSONResponse(status_code=201, content=photo_item(p))
 
 
 @app.delete("/api/photos/{pid}")
@@ -1004,31 +854,6 @@ def delete_photo(pid: str, request: Request):
     conn.commit()
     conn.close()
     return {"deleted": pid}
-
-
-@app.get("/api/stats")
-def stats():
-    conn = db()
-    rows = conn.execute(
-        """SELECT o.date AS date, r.distance_km AS dkm, r.elevation_gain AS dgain
-           FROM outings o LEFT JOIN routes r ON r.id = o.route_id"""
-    ).fetchall()
-    conn.close()
-    total_km = 0.0
-    total_gain = 0
-    months = set()
-    for r in rows:
-        total_km += (r["dkm"] or 0)
-        total_gain += (r["dgain"] or 0)
-        if r["date"]:
-            months.add(r["date"][:7])
-    return {
-        "outings": len(rows),
-        "total_km": round(total_km, 1),
-        "total_elevation_gain": int(total_gain),
-        "active_months": len(months),
-        "months": sorted(months),
-    }
 
 
 # Local dev convenience: serve the static site from the same origin so the

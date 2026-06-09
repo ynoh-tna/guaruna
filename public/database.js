@@ -1,9 +1,10 @@
 /* =========================================================
-   Guaruna — GPX database: explorer + journal orchestrator
-   Talks to /api on the same origin. Robust against an offline
-   API (responses read as text, JSON-parsed in try/catch).
-   User text -> textContent (no XSS). Map: Leaflet (optional;
-   falls back to a list-only experience if absent).
+   Guaruna — GPX database: map explorer
+   Public catalog: find routes in a zone, filter for ideas, share a GPX.
+   Each route opens a detail panel (map + profile + community photos).
+   Talks to /api on the same origin; robust against an offline API.
+   User text -> textContent (no XSS). Map: Leaflet (optional; falls back
+   to a list-only experience if absent).
    ========================================================= */
 (function () {
   'use strict';
@@ -38,15 +39,6 @@
   var surpriseBtn = root.querySelector('#btn-surprise');
   var clearBtn = root.querySelector('#btn-clear');
 
-  var segs = root.querySelectorAll('.db-segment');
-  var viewExplore = root.querySelector('#view-explore');
-  var viewJournal = root.querySelector('#view-journal');
-
-  var jStats = root.querySelector('#journal-stats');
-  var jStatus = root.querySelector('#journal-status');
-  var jTimeline = root.querySelector('#journal-timeline');
-  var jPager = root.querySelector('#journal-pager');
-
   var lightbox = root.querySelector('#lightbox');
   var lightboxImg = root.querySelector('#lightbox-img');
   var lightboxClose = root.querySelector('#lightbox-close');
@@ -56,8 +48,6 @@
   var nameInput = root.querySelector('#db-name');
   var fileInput = root.querySelector('#db-file');
   var typeInput = root.querySelector('#db-type');
-  var souvToggle = root.querySelector('#db-souvenir-toggle');
-  var souvBox = root.querySelector('#db-souv');
   var formErr = root.querySelector('#db-form-error');
   var submitBtn = root.querySelector('#db-submit');
 
@@ -66,7 +56,7 @@
   var PIN_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg>';
   var DL_SVG = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>';
   var DEL_SVG = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
-  var DONE_SVG = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  var CAM_SVG = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="3.5"/></svg>';
 
   // ---------- helpers (exposed) ----------
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -82,11 +72,7 @@
   };
   var api = GDB.api;
 
-  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  var MON_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   GDB.fmtDuration = function (s) { if (!s || s <= 0) return '—'; var m = Math.round(s / 60); if (m < 60) return m + ' min'; var h = Math.floor(m / 60), mm = m % 60; return h + 'h' + (mm < 10 ? '0' : '') + mm; };
-  GDB.fmtDate = function (d) { if (!d) return ''; var p = String(d).slice(0, 10).split('-'); if (p.length < 3) return d; return parseInt(p[2], 10) + ' ' + MON[(parseInt(p[1], 10) - 1) || 0] + ' ' + p[0]; };
-  GDB.today = function () { var d = new Date(), m = d.getMonth() + 1, day = d.getDate(); return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day; };
 
   GDB.miniMap = function (holder, latlngs, color) {
     if (typeof L === 'undefined' || !holder || !latlngs || latlngs.length < 2) return null;
@@ -101,7 +87,11 @@
   };
 
   GDB.openLightbox = function (url) { if (!lightbox) return; lightboxImg.src = url; lightbox.classList.remove('is-hidden'); document.body.style.overflow = 'hidden'; };
-  function closeLightbox() { lightbox.classList.add('is-hidden'); lightboxImg.src = ''; if (modal.classList.contains('is-hidden') && (!document.getElementById('route-detail') || document.getElementById('route-detail').classList.contains('is-hidden'))) document.body.style.overflow = ''; }
+  function closeLightbox() {
+    lightbox.classList.add('is-hidden'); lightboxImg.src = '';
+    var rd = document.getElementById('route-detail');
+    if (modal.classList.contains('is-hidden') && (!rd || rd.classList.contains('is-hidden'))) document.body.style.overflow = '';
+  }
   if (lightbox) {
     lightboxClose.addEventListener('click', closeLightbox);
     lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
@@ -124,14 +114,11 @@
 
   // ---------- state ----------
   var state = {
-    seg: 'explore', q: '', bbox: null, near: null,
+    q: '', bbox: null, near: null,
     distMin: null, distMax: null, elevMin: null, elevMax: null,
     type: '', sort: 'newest', page: 1,
     autoSearch: !(window.matchMedia && window.matchMedia('(max-width: 900px)').matches)
   };
-  var doneRouteIds = {};
-  GDB.isDone = function (id) { return !!doneRouteIds[id]; };
-
   var routesById = {};      // id -> { item, layer, row }
   var debounce, placeDebounce;
 
@@ -161,9 +148,7 @@
     if (rec.row) rec.row.classList.toggle('is-active', on);
     if (!rec.layer || !hlLayer) return;
     hlLayer.clearLayers();
-    if (on) {
-      L.polyline(rec.item.polyline, { color: GDB.isDone(id) ? '#0c8f73' : '#1E4FD0', weight: 5, opacity: 1 }).addTo(hlLayer);
-    }
+    if (on) L.polyline(rec.item.polyline, { color: '#1E4FD0', weight: 5, opacity: 1 }).addTo(hlLayer);
   }
 
   function drawTraces(items) {
@@ -172,7 +157,7 @@
     var all = [];
     items.forEach(function (it) {
       if (!it.polyline || it.polyline.length < 2) return;
-      var line = L.polyline(it.polyline, { color: GDB.isDone(it.id) ? '#11C29B' : '#2F6BFF', weight: 3, opacity: 0.55 });
+      var line = L.polyline(it.polyline, { color: '#2F6BFF', weight: 3, opacity: 0.55 });
       line.on('mouseover', function () { highlight(it.id, true); });
       line.on('mouseout', function () { highlight(it.id, false); });
       line.on('click', function () { GDB.Detail.open(it); });
@@ -181,13 +166,13 @@
       all.push(line);
     });
     if (!didInitialFit && !state.bbox && all.length && exploreMap) {
-      try { var grp = L.featureGroup(all); suppressMove = true; exploreMap.fitBounds(grp.getBounds(), { padding: [30, 30] }); } catch (e) {}
+      try { suppressMove = true; exploreMap.fitBounds(L.featureGroup(all).getBounds(), { padding: [30, 30] }); } catch (e) {}
       didInitialFit = true;
     }
   }
 
   // ========================================================
-  // Explorer list
+  // List
   // ========================================================
   function clearStatus() { statusEl.innerHTML = ''; statusEl.classList.add('is-hidden'); }
 
@@ -220,11 +205,11 @@
 
     var main = el('div', 'route-row-main');
     var nameWrap = el('div'); nameWrap.style.display = 'flex'; nameWrap.style.alignItems = 'center'; nameWrap.style.flexWrap = 'wrap';
-    var name = el('span', 'route-row-name', it.name);
-    nameWrap.appendChild(name);
-    var badges = el('span', 'rr-badges');
-    if (GDB.isDone(it.id)) { var done = el('span', 'rr-done'); done.innerHTML = DONE_SVG; done.appendChild(document.createTextNode(' Done')); badges.appendChild(done); }
-    nameWrap.appendChild(badges);
+    nameWrap.appendChild(el('span', 'route-row-name', it.name));
+    if (it.photo_count) {
+      var pb = el('span', 'rr-photos'); pb.innerHTML = CAM_SVG; pb.appendChild(document.createTextNode(' ' + it.photo_count));
+      nameWrap.appendChild(pb);
+    }
     main.appendChild(nameWrap);
 
     var meta = el('div', 'route-row-meta');
@@ -259,7 +244,7 @@
     data.items.forEach(function (it) { routesById[it.id] = { item: it, layer: null, row: null }; });
     if (!data.items.length) {
       drawTraces([]);
-      if (state.q || state.type || state.distMin || state.distMax || state.elevMin || state.elevMax)
+      if (state.q || state.type || state.distMin != null || state.distMax != null || state.elevMin != null || state.elevMax != null)
         showMessage(PIN_SVG, 'No matches here', 'Try widening the map, clearing filters, or searching another place.', 'Clear filters', clearFilters);
       else showMessage(ROUTE_SVG.replace(/#fff/g, 'currentColor'), 'No routes yet', 'Be the first to add a GPX route.', 'Add a route', openModal);
       return;
@@ -302,11 +287,12 @@
       render(res.data);
     });
   }
+  GDB.refresh = load;   // detail panel calls this after photos change (to update badges)
 
   function removeRoute(it) {
-    if (!window.confirm('Delete “' + it.name + '”? This also removes its outings. This cannot be undone.')) return;
+    if (!window.confirm('Delete “' + it.name + '”? This also removes its photos. This cannot be undone.')) return;
     api('/api/routes/' + encodeURIComponent(it.id), { method: 'DELETE', headers: { 'X-Admin-Token': adminToken } }).then(function (res) {
-      if (res.ok) { GDB.afterJournalChange(); }
+      if (res.ok) { load(); }
       else if (res.status === 403) window.alert('Admin token rejected. Reopen with ?admin=YOUR_TOKEN.');
       else window.alert((res.data && res.data.detail) || 'Delete failed.');
     });
@@ -423,177 +409,14 @@
   });
 
   // ========================================================
-  // Segments
-  // ========================================================
-  function setSeg(seg) {
-    state.seg = seg;
-    segs.forEach(function (b) { var on = b.dataset.seg === seg; b.classList.toggle('is-active', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-    viewExplore.classList.toggle('is-hidden', seg !== 'explore');
-    viewJournal.classList.toggle('is-hidden', seg !== 'journal');
-    if (seg === 'explore' && exploreMap) setTimeout(function () { exploreMap.invalidateSize(); }, 60);
-    if (seg === 'journal') loadJournal();
-  }
-  segs.forEach(function (b) { b.addEventListener('click', function () { setSeg(b.dataset.seg); }); });
-
-  // ========================================================
-  // My outings (journal)
-  // ========================================================
-  var journalMap = null, journalLayer = null;
-  function metric(k, v) { var m = el('div', 'metric'); m.appendChild(el('div', 'k', k)); m.appendChild(el('div', 'v', v)); return m; }
-
-  function renderStats(s) {
-    jStats.innerHTML = '';
-    jStats.appendChild(metric('Outings', s.outings || 0));
-    jStats.appendChild(metric('Total distance', (s.total_km || 0) + ' km'));
-    jStats.appendChild(metric('Total climb', '+' + (s.total_elevation_gain || 0) + ' m'));
-    jStats.appendChild(metric('Active months', s.active_months || 0));
-  }
-
-  function renderJournalMap(items) {
-    if (typeof L === 'undefined') return;
-    var holder = document.getElementById('journal-map');
-    if (!journalMap) {
-      journalMap = L.map('journal-map', { scrollWheelZoom: false, preferCanvas: true });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(journalMap);
-      journalMap.setView([46, 6], 4);
-      journalLayer = L.layerGroup().addTo(journalMap);
-    }
-    journalLayer.clearLayers();
-    var lines = [];
-    items.forEach(function (o) {
-      var pl = o.route && o.route.polyline; if (!pl || pl.length < 2) return;
-      var line = L.polyline(pl, { color: '#11C29B', weight: 3, opacity: 0.6 });
-      if (o.route) line.on('click', function () { GDB.Detail.open(o.route); });
-      journalLayer.addLayer(line); lines.push(line);
-    });
-    setTimeout(function () { journalMap.invalidateSize(); if (lines.length) { try { journalMap.fitBounds(L.featureGroup(lines).getBounds(), { padding: [30, 30] }); } catch (e) {} } }, 70);
-  }
-
-  function renderStreak(months) {
-    // last 12 months activity dots
-    var set = {}; (months || []).forEach(function (m) { set[m] = 1; });
-    var now = new Date(); var strip = el('div', 'streak-strip');
-    for (var i = 11; i >= 0; i--) {
-      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      var key = d.getFullYear() + '-' + ((d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1));
-      var dot = el('span', 'streak-dot' + (set[key] ? ' on' : '')); dot.title = MON_LONG[d.getMonth()] + ' ' + d.getFullYear();
-      strip.appendChild(dot);
-    }
-    return strip;
-  }
-
-  function timelineEntry(o) {
-    var entry = el('div', 'timeline-entry');
-    var box = el('div', 'te-date');
-    var p = String(o.date || '').slice(0, 10).split('-');
-    box.appendChild(el('div', 'te-day', p[2] ? String(parseInt(p[2], 10)) : '—'));
-    box.appendChild(el('div', 'te-mon', p[1] ? MON[(parseInt(p[1], 10) - 1) || 0] : ''));
-    entry.appendChild(box);
-
-    var main = el('div', 'te-main');
-    var nm = el('div', 'te-name', (o.route && o.route.name) || 'Route');
-    if (o.route) nm.addEventListener('click', function () { GDB.Detail.open(o.route); });
-    main.appendChild(nm);
-
-    var meta = el('div', 'te-meta');
-    if (o.route && o.route.location) { var loc = el('span', 'rm-loc'); loc.innerHTML = PIN_SVG; loc.appendChild(document.createTextNode(' ' + o.route.location)); meta.appendChild(loc); }
-    if (o.route) { meta.appendChild(el('span', 'rm-stat', o.route.distance_km + ' km')); meta.appendChild(el('span', 'rm-stat', '+' + o.route.elevation_gain + ' m')); }
-    if (o.rating) { var st = el('span', 'rr-stars'); st.textContent = '★'.repeat(o.rating) + '☆'.repeat(5 - o.rating); meta.appendChild(st); }
-    if (o.feeling) meta.appendChild(el('span', null, GDB.feelingLabel(o.feeling)));
-    main.appendChild(meta);
-
-    if (o.note) main.appendChild(el('div', 'te-note', o.note));
-    if (o.tags && o.tags.length) { var tg = el('div', 'te-tags'); o.tags.forEach(function (t) { tg.appendChild(el('span', 'te-tag', t)); }); main.appendChild(tg); }
-    if (o.photos && o.photos.length) main.appendChild(GDB.photoGallery(o, { canAdd: false }));
-    entry.appendChild(main);
-
-    if (adminToken) {
-      var act = el('div', 'te-actions');
-      var del = el('button', 'btn btn-ghost btn-sm btn-icon', ''); del.type = 'button'; del.title = 'Delete outing'; del.innerHTML = DEL_SVG;
-      del.addEventListener('click', function () {
-        if (!window.confirm('Delete this outing and its photos?')) return;
-        api('/api/outings/' + encodeURIComponent(o.id), { method: 'DELETE', headers: { 'X-Admin-Token': adminToken } }).then(function (res) { if (res.ok) GDB.afterJournalChange(); });
-      });
-      act.appendChild(del); entry.appendChild(act);
-    }
-    return entry;
-  }
-
-  function loadJournal() {
-    jStatus.classList.add('is-hidden'); jTimeline.innerHTML = ''; jPager.innerHTML = '';
-    Promise.all([api('/api/outings?page=1'), api('/api/stats')]).then(function (r) {
-      var data = (r[0] && r[0].ok && r[0].data) ? r[0].data : null;
-      var s = (r[1] && r[1].ok && r[1].data) ? r[1].data : { outings: 0, total_km: 0, total_elevation_gain: 0, active_months: 0, months: [] };
-      if (!data) { jStats.innerHTML = ''; jStatus.classList.remove('is-hidden'); jStatus.textContent = 'History unavailable right now.'; return; }
-      renderStats(s);
-      var items = data.items || [];
-      if (!items.length) {
-        renderJournalMap([]);
-        jTimeline.innerHTML = '';
-        jStatus.classList.remove('is-hidden');
-        jStatus.innerHTML = '';
-        var box = el('div', 'db-empty');
-        var ic = el('div', 'db-empty-icon'); ic.innerHTML = ROUTE_SVG.replace(/#fff/g, 'currentColor'); box.appendChild(ic);
-        box.appendChild(el('h3', null, 'No outings yet'));
-        box.appendChild(el('p', null, 'Open a route and mark it as done to start your history.'));
-        var b = el('button', 'btn btn-primary', 'Explore routes'); b.type = 'button'; b.addEventListener('click', function () { setSeg('explore'); }); box.appendChild(b);
-        jStatus.appendChild(box);
-        return;
-      }
-      renderJournalMap(items);
-      jTimeline.appendChild(renderStreak(s.months));
-      var curMonth = '';
-      items.forEach(function (o) {
-        var mk = String(o.date || '').slice(0, 7);
-        if (mk !== curMonth) {
-          curMonth = mk; var pp = mk.split('-');
-          jTimeline.appendChild(el('div', 'timeline-month', pp[1] ? (MON_LONG[(parseInt(pp[1], 10) - 1) || 0] + ' ' + pp[0]) : 'Undated'));
-        }
-        jTimeline.appendChild(timelineEntry(o));
-      });
-    });
-  }
-
-  // ========================================================
-  // Done set + cross-view refresh
-  // ========================================================
-  function loadDoneSet() {
-    doneRouteIds = {};
-    function page(n) {
-      return api('/api/outings?page=' + n).then(function (res) {
-        if (!res.ok || !res.data || !res.data.items) return;
-        res.data.items.forEach(function (o) { if (o.route_id) doneRouteIds[o.route_id] = 1; });
-        if (res.data.page < res.data.pages && n < 20) return page(n + 1);
-      });
-    }
-    return page(1);
-  }
-  GDB.afterJournalChange = function () {
-    return loadDoneSet().then(function () {
-      if (state.seg === 'journal') loadJournal();
-      else load();
-    });
-  };
-
-  // ========================================================
   // Add route modal
   // ========================================================
-  var modalSouv = null;
-  function openModal() {
-    modal.classList.remove('is-hidden'); formErr.classList.add('is-hidden'); document.body.style.overflow = 'hidden';
-    if (!modalSouv) modalSouv = GDB.buildSouvenir(souvBox, { withPhotos: true });
-    nameInput.focus();
-  }
-  function closeModal() {
-    modal.classList.add('is-hidden'); document.body.style.overflow = ''; form.reset();
-    formErr.classList.add('is-hidden'); souvBox.classList.add('is-hidden'); if (souvToggle) souvToggle.checked = false;
-    if (modalSouv) modalSouv.clear();
-  }
+  function openModal() { modal.classList.remove('is-hidden'); formErr.classList.add('is-hidden'); document.body.style.overflow = 'hidden'; nameInput.focus(); }
+  function closeModal() { modal.classList.add('is-hidden'); document.body.style.overflow = ''; form.reset(); formErr.classList.add('is-hidden'); }
   addBtn.addEventListener('click', openModal);
   if (adminToken) { var badge = el('span', 'admin-badge', 'Admin mode'); root.querySelector('#db-admin-slot').appendChild(badge); }
   modal.addEventListener('click', function (e) { if (e.target === modal || e.target.hasAttribute('data-close')) closeModal(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.classList.contains('is-hidden')) closeModal(); });
-  if (souvToggle) souvToggle.addEventListener('change', function () { souvBox.classList.toggle('is-hidden', !souvToggle.checked); });
 
   function detectCountries(file) {
     return new Promise(function (resolve) {
@@ -636,31 +459,21 @@
       submitBtn.textContent = 'Uploading…';
       return api('/api/routes', { method: 'POST', body: fd });
     }).then(function (res) {
-      if (!res || !res.ok || !res.data) { showErr((res && res.data && res.data.detail) ? res.data.detail : (res && res.status === 0 ? 'Could not reach the server.' : 'Upload failed. Please try again.')); submitBtn.disabled = false; submitBtn.textContent = 'Add route'; return; }
-      var route = res.data;
-      var doSouv = souvToggle && souvToggle.checked && modalSouv;
-      var chain = Promise.resolve();
-      if (doSouv) {
-        submitBtn.textContent = 'Saving souvenir…';
-        var f = modalSouv.read(); var fd2 = new FormData();
-        fd2.append('route_id', route.id); fd2.append('date', f.date); fd2.append('rating', String(f.rating || 0));
-        fd2.append('feeling', f.feeling || ''); fd2.append('note', f.note || ''); fd2.append('tags', f.tags || '');
-        chain = api('/api/outings', { method: 'POST', body: fd2 }).then(function (r2) {
-          if (r2.ok && r2.data) return GDB.uploadPhotos(r2.data.id, modalSouv.files());
-        });
+      if (!res || !res.ok || !res.data) {
+        showErr((res && res.data && res.data.detail) ? res.data.detail : (res && res.status === 0 ? 'Could not reach the server.' : 'Upload failed. Please try again.'));
+        return;
       }
-      chain.then(function () {
-        closeModal(); submitBtn.disabled = false; submitBtn.textContent = 'Add route';
-        if (exploreMap && route.bbox) { suppressMove = true; try { exploreMap.fitBounds([[route.bbox[0], route.bbox[1]], [route.bbox[2], route.bbox[3]]], { padding: [40, 40] }); } catch (e) {} state.bbox = currentBbox(); }
-        state.q = ''; if (search) search.value = ''; state.page = 1;
-        GDB.afterJournalChange();
-      });
-    });
+      var route = res.data;
+      closeModal();
+      if (exploreMap && route.bbox) { suppressMove = true; try { exploreMap.fitBounds([[route.bbox[0], route.bbox[1]], [route.bbox[2], route.bbox[3]]], { padding: [40, 40] }); } catch (e) {} state.bbox = currentBbox(); }
+      state.q = ''; if (search) search.value = ''; state.page = 1; load();
+      GDB.Detail.open(route);   // open the new route so the user can add photos/info right away
+    }).finally(function () { submitBtn.disabled = false; submitBtn.textContent = 'Add route'; });
   });
 
   // ========================================================
   // Init
   // ========================================================
   initMap();
-  loadDoneSet().then(load);
+  load();
 })();
