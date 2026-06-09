@@ -21,6 +21,20 @@
   function getPseudo() { try { return localStorage.getItem('guaruna-pseudo') || ''; } catch (e) { return ''; } }
   function setPseudo(v) { try { localStorage.setItem('guaruna-pseudo', v); } catch (e) {} }
 
+  // Enable admin on any page via ?admin=TOKEN (?admin=off to clear). Kept per-tab in
+  // sessionStorage; only the 'admin' param is stripped from the URL (gpx/rid stay).
+  (function captureAdmin() {
+    try {
+      var m = location.search.match(/[?&]admin=([^&]*)/);
+      if (!m) return;
+      var v = decodeURIComponent(m[1]);
+      if (!v || v === 'off') sessionStorage.removeItem('guaruna-admin'); else sessionStorage.setItem('guaruna-admin', v);
+      var p = new URLSearchParams(location.search); p.delete('admin');
+      var qs = p.toString();
+      history.replaceState({}, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+    } catch (e) {}
+  })();
+
   var CAM = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
 
   // ---- self-contained lightbox ----
