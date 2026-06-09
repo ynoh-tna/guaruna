@@ -6,17 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#2F6BFF" />
 
-  <title>GPX Database — Share &amp; Download Running Routes | Guaruna</title>
+  <title>GPX Database — Explore, Map &amp; Remember Your Routes | Guaruna</title>
   <meta name="description"
-    content="A community GPX database. Search running routes, download them, open them in the viewer, or add your own GPX file for everyone to use." />
+    content="A map-first GPX database. Find routes inside any zone, get route ideas with filters, then keep a souvenir and a history of the outings you've done." />
 
   <link rel="canonical" href="https://guaruna.com/gpx-database" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Guaruna" />
-  <meta property="og:title" content="GPX Database — Share &amp; Download Running Routes" />
-  <meta property="og:description" content="Search, download, analyze and add running routes as GPX files." />
+  <meta property="og:title" content="GPX Database — Explore, Map &amp; Remember Your Routes" />
+  <meta property="og:description" content="Find GPX routes on a map, filter for ideas, and keep a souvenir + history of your outings." />
   <meta property="og:url" content="https://guaruna.com/gpx-database" />
   <meta property="og:image" content="https://guaruna.com/og-image.svg" />
 
@@ -26,6 +26,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="/styles.css" />
 
   <script type="application/ld+json">
@@ -34,7 +35,7 @@
   "@type": "CollectionPage",
   "name": "GPX Database",
   "url": "https://guaruna.com/gpx-database",
-  "description": "A community database of running routes as downloadable GPX files."
+  "description": "A map-first database of running and outdoor routes as downloadable GPX files."
 }
 </script>
 </head>
@@ -69,8 +70,8 @@
       <div class="container">
         <p class="breadcrumb"><a href="/">Home</a> / GPX database</p>
         <h1>GPX database</h1>
-        <p class="lede">Search shared running routes, open one in the viewer or download it — and add your own GPX for
-          everyone to use.</p>
+        <p class="lede">Find routes inside any area on the map, filter for ideas, then keep a souvenir and a history of
+          the outings you've done.</p>
       </div>
     </section>
 
@@ -78,41 +79,190 @@
       <div class="container">
         <div id="gpx-db">
 
-          <div class="db-toolbar">
-            <div class="db-search">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" />
-                <path d="M21 21l-4.3-4.3" />
-              </svg>
-              <input id="db-search" class="input" type="search" placeholder="Search routes by name or place…"
-                aria-label="Search routes" />
+          <!-- Segments + actions -->
+          <div class="db-top">
+            <div class="db-segments" role="tablist" aria-label="Database views">
+              <button class="db-segment is-active" type="button" data-seg="explore" role="tab"
+                aria-selected="true">Explore</button>
+              <button class="db-segment" type="button" data-seg="journal" role="tab" aria-selected="false">My
+                outings</button>
             </div>
-            <button class="btn btn-primary" id="db-add-btn" type="button">+ Add a route</button>
+            <div class="db-top-actions">
+              <span id="db-admin-slot"></span>
+              <button class="btn btn-primary" id="db-add-btn" type="button">+ Add a route</button>
+            </div>
           </div>
 
-          <p id="db-status" class="muted db-status is-hidden"></p>
-          <div class="route-list" id="db-grid"></div>
-          <div class="pager" id="db-pager"></div>
+          <!-- ===================== EXPLORE ===================== -->
+          <div id="view-explore" class="db-view">
+            <div class="explore-shell">
 
-          <!-- Add route modal -->
+              <div class="explore-map-col">
+                <div class="map-searchbar">
+                  <div class="db-search msb-place">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+                      <circle cx="12" cy="10" r="2.5" />
+                    </svg>
+                    <input id="place-search" class="input" type="search" placeholder="Jump to a place — city, park…"
+                      aria-label="Search a place" autocomplete="off" />
+                    <div id="place-results" class="map-search-results is-hidden" role="listbox"></div>
+                  </div>
+                  <button class="btn btn-ghost btn-sm msb-near" id="btn-near" type="button" aria-label="Find routes near me">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                    </svg>
+                    <span>Near me</span>
+                  </button>
+                </div>
+                <div class="gpx-mapwrap explore-mapwrap">
+                  <div id="explore-map" class="gpx-map explore-map"></div>
+                  <button class="btn btn-primary btn-sm map-search-area is-hidden" id="btn-search-area"
+                    type="button">Search this area</button>
+                  <div id="map-fallback" class="map-fallback is-hidden">Map unavailable — browse the list below.</div>
+                </div>
+              </div>
+
+              <div class="explore-side">
+                <div class="db-search">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M21 21l-4.3-4.3" />
+                  </svg>
+                  <input id="db-search" class="input" type="search" placeholder="Filter by name or place…"
+                    aria-label="Filter routes" />
+                </div>
+
+                <div class="filter-bar" id="filter-bar">
+                  <div class="filter-head">
+                    <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false"
+                      aria-controls="filter-panel">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 6h16M7 12h10M10 18h4" />
+                      </svg>
+                      Filters <span class="filter-count is-hidden" id="filter-count">0</span>
+                    </button>
+                    <select class="input sort-select" id="sort-select" aria-label="Sort routes">
+                      <option value="newest">Newest</option>
+                      <option value="nearest">Nearest</option>
+                      <option value="longest">Longest</option>
+                      <option value="shortest">Shortest</option>
+                      <option value="climb">Most climb</option>
+                    </select>
+                  </div>
+                  <div class="filter-panel is-hidden" id="filter-panel">
+                    <div class="filter-group">
+                      <label>Distance (km)</label>
+                      <div class="range-combo">
+                        <span class="ed-pre">min</span><input id="f-dist-min" type="number" min="0" inputmode="decimal"
+                          placeholder="0" aria-label="Min distance" />
+                        <span class="ed-pre">max</span><input id="f-dist-max" type="number" min="0" inputmode="decimal"
+                          placeholder="∞" aria-label="Max distance" />
+                      </div>
+                    </div>
+                    <div class="filter-group">
+                      <label>Elevation gain (m)</label>
+                      <div class="range-combo">
+                        <span class="ed-pre">min</span><input id="f-elev-min" type="number" min="0" inputmode="numeric"
+                          placeholder="0" aria-label="Min elevation" />
+                        <span class="ed-pre">max</span><input id="f-elev-max" type="number" min="0" inputmode="numeric"
+                          placeholder="∞" aria-label="Max elevation" />
+                      </div>
+                    </div>
+                    <div class="filter-group">
+                      <label>Activity</label>
+                      <div class="type-chips" id="type-chips">
+                        <button class="ed-chip is-active" type="button" data-type="">Any</button>
+                        <button class="ed-chip" type="button" data-type="run">Run</button>
+                        <button class="ed-chip" type="button" data-type="trail">Trail</button>
+                        <button class="ed-chip" type="button" data-type="bike">Bike</button>
+                        <button class="ed-chip" type="button" data-type="hike">Hike</button>
+                        <button class="ed-chip" type="button" data-type="walk">Walk</button>
+                      </div>
+                    </div>
+                    <div class="filter-actions">
+                      <button class="btn btn-ghost btn-sm" id="btn-surprise" type="button">🎲 Surprise me</button>
+                      <button class="btn btn-ghost btn-sm" id="btn-clear" type="button">Clear</button>
+                    </div>
+                  </div>
+                </div>
+
+                <p id="explore-count" class="db-count muted"></p>
+                <p id="db-status" class="muted db-status is-hidden"></p>
+                <div class="route-list" id="db-grid"></div>
+                <div class="pager" id="db-pager"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ===================== MY OUTINGS ===================== -->
+          <div id="view-journal" class="db-view is-hidden">
+            <div class="gpx-statbar journal-statbar" id="journal-stats"></div>
+            <div class="gpx-mapwrap journal-mapwrap">
+              <div id="journal-map" class="gpx-map"></div>
+              <div class="gpx-namechip journal-mapchip">Places you've been</div>
+            </div>
+            <p id="journal-status" class="muted db-status is-hidden"></p>
+            <div class="timeline" id="journal-timeline"></div>
+            <div class="pager" id="journal-pager"></div>
+          </div>
+
+          <!-- Route detail drawer (filled by db-detail.js) -->
+          <div class="route-detail-overlay is-hidden" id="route-detail" role="dialog" aria-modal="true"
+            aria-label="Route detail">
+            <div class="route-detail-panel" id="route-detail-panel"></div>
+          </div>
+
+          <!-- Photo lightbox -->
+          <div class="lightbox is-hidden" id="lightbox">
+            <button class="lightbox-close" id="lightbox-close" type="button" aria-label="Close">&times;</button>
+            <img id="lightbox-img" alt="Outing photo" />
+          </div>
+
+          <!-- Add route modal (with optional souvenir) -->
           <div class="modal-overlay is-hidden" id="db-modal" role="dialog" aria-modal="true" aria-label="Add a route">
-            <div class="modal">
+            <div class="modal modal-wide">
               <button class="modal-close" data-close type="button" aria-label="Close">&times;</button>
               <h2>Add a route</h2>
               <p class="muted" style="margin-bottom:18px">Upload a <code>.gpx</code> file (max 10&nbsp;MB). It becomes
-                public — please don't upload private or sensitive tracks.</p>
+                public — please don't upload private or sensitive tracks. A souvenir is optional.</p>
               <form id="db-form">
                 <div class="field">
                   <label for="db-name">Route name</label>
                   <input class="input" id="db-name" type="text" maxlength="80" placeholder="e.g. Sunday long run"
                     required />
                 </div>
-                <div class="field">
-                  <label for="db-file">GPX file</label>
-                  <input class="input" id="db-file" type="file" accept=".gpx,application/gpx+xml" required />
+                <div class="field-row">
+                  <div class="field" style="margin-bottom:0">
+                    <label for="db-file">GPX file</label>
+                    <input class="input" id="db-file" type="file" accept=".gpx,application/gpx+xml" required />
+                  </div>
+                  <div class="field" style="margin-bottom:0">
+                    <label for="db-type">Activity</label>
+                    <select class="input" id="db-type">
+                      <option value="run">Run</option>
+                      <option value="trail">Trail</option>
+                      <option value="bike">Bike</option>
+                      <option value="hike">Hike</option>
+                      <option value="walk">Walk</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
                 </div>
-                <div id="db-form-error" class="gpx-error is-hidden" style="margin-bottom:14px"></div>
+
+                <label class="souvenir-switch">
+                  <input type="checkbox" id="db-souvenir-toggle" />
+                  <span><strong>I did this — add a souvenir</strong><br />
+                    <span class="muted">Log it to your history with a note, rating and photos.</span></span>
+                </label>
+                <div class="souvenir-editor is-hidden" id="db-souv"></div>
+
+                <div id="db-form-error" class="gpx-error is-hidden" style="margin:14px 0"></div>
                 <div class="modal-actions">
                   <button type="button" class="btn btn-ghost" data-close>Cancel</button>
                   <button type="submit" class="btn btn-primary" id="db-submit">Add route</button>
@@ -131,13 +281,19 @@
         <h2 style="margin-bottom:20px">Frequently asked questions</h2>
         <div class="faq">
           <details>
-            <summary>Is the GPX route database free?</summary>
-            <p>Yes. Browsing, searching and downloading routes is free, and you can add your own.</p>
+            <summary>How do I find routes in a specific area?</summary>
+            <p>Pan and zoom the map to your area, or search a place. The list shows every route whose track falls inside
+              the current map view. Use the filters for distance, elevation and activity.</p>
+          </details>
+          <details>
+            <summary>What is a “souvenir” and a “history”?</summary>
+            <p>Mark any route as done with a date, a rating, a note and photos. It joins your outings history with totals
+              and a map of everywhere you've been.</p>
           </details>
           <details>
             <summary>What happens to a route I upload?</summary>
             <p>It becomes public so anyone can view and download it. Please do not upload private or sensitive tracks.
-            </p>
+              Photos are re-encoded and their EXIF/GPS data is stripped.</p>
           </details>
           <details>
             <summary>Can I open a route in the viewer?</summary>
@@ -148,7 +304,7 @@
     </section>
 
     <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is the GPX route database free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Browsing, searching and downloading routes is free, and you can add your own."}},{"@type":"Question","name":"What happens to a route I upload?","acceptedAnswer":{"@type":"Answer","text":"It becomes public so anyone can view and download it. Please do not upload private or sensitive tracks."}},{"@type":"Question","name":"Can I open a route in the viewer?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every route opens in the GPX viewer with its map, elevation profile and splits."}}]}
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I find routes in a specific area?","acceptedAnswer":{"@type":"Answer","text":"Pan and zoom the map to your area, or search a place. The list shows every route whose track falls inside the current map view."}},{"@type":"Question","name":"What happens to a route I upload?","acceptedAnswer":{"@type":"Answer","text":"It becomes public so anyone can view and download it. Please do not upload private or sensitive tracks. Photos have their EXIF/GPS data stripped."}},{"@type":"Question","name":"Can I open a route in the viewer?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every route opens in the GPX viewer with its map, elevation profile and splits."}}]}
   </script>
     <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://guaruna.com/"},{"@type":"ListItem","position":2,"name":"GPX database","item":"https://guaruna.com/gpx-database"}]}
@@ -189,8 +345,6 @@
       <div>
         <p class="footer-title">Contact</p>
         <a href="#" data-u="hello" data-d="guaruna.com" data-subject="Hello Guaruna">Email us</a>
-
-        -->
       </div>
     </div>
     <div class="container footer-bottom">
@@ -199,7 +353,9 @@
     </div>
   </footer>
 
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
   <script src="/script.js" defer></script>
+  <script src="/db-detail.js" defer></script>
   <script src="/database.js" defer></script>
 </body>
 

@@ -12,8 +12,8 @@ RUN pip install --no-cache-dir -r server/requirements.txt
 # Copy the app + static site
 COPY . .
 
-# Writable runtime dirs (SQLite db + uploads); also mounted as volumes in compose
-RUN mkdir -p server/data public/routes/uploads
+# Writable runtime dirs (SQLite db + uploads + photos); also mounted as volumes in compose
+RUN mkdir -p server/data public/routes/uploads public/routes/uploads/photos
 
 ENV GUARUNA_SERVE_STATIC=1
 EXPOSE 8001
